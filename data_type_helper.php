@@ -1,4 +1,4 @@
-//2022 Tamas Hernadi
+//Copyright (c) 2022 Tamas Hernadi
 
 <?php
 
