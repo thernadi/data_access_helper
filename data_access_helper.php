@@ -1,5 +1,5 @@
 <?php
-//2022 Tamas Hernadi
+//Copyright (c) 2022 Tamas Hernadi
 //Data Access Helper For MySQL Database 
 //Dependency:data_type_helper.php 
 
