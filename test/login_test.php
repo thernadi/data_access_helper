@@ -1,6 +1,5 @@
 <?php
 include_once __DIR__."/../user_data_repository.php";
-include_once __DIR__."/../data_type_helper.php";
 
 class LoginTest
 {
@@ -51,6 +50,42 @@ class LoginTest
 		}
 	}
 	
+	public function showUserSomeData()
+	{
+		if ($this->userLogin !== null)
+		{
+			$userId = ItemAttribute::getItemAttribute($this->userLogin, "Id");
+			//We will load the user's all data
+			$user = $this->dbUserRepository->loadById($userId->value); 
+			echo "\n\r";
+			echo "User:";
+			$this->dbUserRepository->writeOutSimpleData($user);
+			echo "UserDefaultRole->Name: ";
+			$defaultUserRoleAttribute = ItemAttribute::getItemAttribute($user[0], "DefaultUserRole");
+			$defaultUserRoleAttributeNameAttribute = ItemAttribute::getItemAttribute($defaultUserRoleAttribute->value, "Name");
+			echo $defaultUserRoleAttributeNameAttribute->value;
+			echo "\n\r";
+			Common::writeOutLetter("-", 50);
+			echo "User_UserRolesCollection:";
+			$userRolesCollectionAttribute = ItemAttribute::getItemAttribute($user[0], "UserRolesCollection");
+			$this->dbUserRepository->writeOutSimpleData($userRolesCollectionAttribute->value);
+			echo "User_UserRolesCollection UserRole names:";
+			echo "\n\r";
+			foreach($userRolesCollectionAttribute->value as $userRoleCollectionItem)
+			{
+				$userRoleAttribute = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserRole");	
+				$userRoleAttributeNameAttribute = ItemAttribute::getItemAttribute($userRoleAttribute->value, "Name");
+				echo $userRoleAttributeNameAttribute->value;
+				echo "\n\r";			
+			}
+			echo "\n\r";	
+		}
+		else
+		{
+			echo "User is not logged in!\n\r";
+		}
+	}
+
 	public function registerNewUser($loginName, $password)
 	{	
 		$newUser = null;
@@ -63,14 +98,51 @@ class LoginTest
 		}
 		else
 		{
+			//Set user's base data
 			$passwordsha1 = sha1($password);
 			$newUser = $this->dbUserRepository->getNewItemInstance();
 			$itemAttributeLoginName = ItemAttribute::getItemAttribute($newUser, "LoginName");
 			$itemAttributeLoginName->value = $loginName;	
 			$itemAttributePassword = ItemAttribute::getItemAttribute($newUser, "Password");
 			$itemAttributePassword->value = $passwordsha1;	
-		
-			$this->dbUserRepository->save($newUser);
+			
+			//Set user's DefaultUserRole
+			$filters = array();
+			$filters[] = new BindingParam("IsDeleted", "i", 0);
+			$filters[] = new BindingParam("Code", "s", "BASE_USER");		
+			$userRole = $this->dbUserRepository->dbUserRoleRepository->loadByFilter2($filters);
+			$itemAttributeDefaultUserRole = ItemAttribute::getItemAttribute($newUser, "DefaultUserRole");
+			$itemAttributeDefaultUserRole->value = $userRole[0];
+	
+
+			//Set user's UserRolesCollection
+			$itemAttributeUserRoleCollection = ItemAttribute::getItemAttribute($newUser, "UserRolesCollection");
+			$userRoleCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionItemAttributes());
+
+			$filters = array();
+			$filters[] = new BindingParam("IsDeleted", "i", 0);
+			$filters[] = new BindingParam("Code", "s", "GUEST");		
+			$userRole = $this->dbUserRepository->dbUserRoleRepository->loadByFilter2($filters);
+			$itemAttributeUserRoleCollectionItemUserRole = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserRole");
+			$itemAttributeUserRoleCollectionItemUserRole->value = $userRole;
+
+			$filters = array();
+			$filters[] = new BindingParam("IsDeleted", "i", 0);
+			$filters[] = new BindingParam("Name", "s", "ACTIVE");		
+			$userSetting = $this->dbUserRepository->dbUserSettingRepository->loadByFilter2($filters);
+
+			$itemAttributeUserRoleCollectionItemUserSettingCollection = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserSettingsCollection");
+			$userRoleCollectionItemUserSettingCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionUserSettingsCollectionItemAttributes());
+			$userRoleCollectionItemUserSettingCollectionItemUserSetting = ItemAttribute::getItemAttribute($userRoleCollectionItemUserSettingCollectionItem, "UserSetting");
+			$userRoleCollectionItemUserSettingCollectionItemUserSetting->value = $userSetting;
+			$userRoleCollectionItemUserSettingCollectionItemValue = ItemAttribute::getItemAttribute($userRoleCollectionItemUserSettingCollectionItem, "Value");
+			$userRoleCollectionItemUserSettingCollectionItemValue->value = 1; //1 - TRUE, 0 - FALSE
+			$itemAttributeUserRoleCollectionItemUserSettingCollection->value[] = $userRoleCollectionItemUserSettingCollectionItem;
+
+			$itemAttributeUserRoleCollection->value[] = $userRoleCollectionItem;
+
+
+			$this->dbUserRepository->save($newUser); //This save function is saving only base data yet. TODO: DT_LIST collection's saving.
 			echo "User registered!\n\r";
 		}
 	}
@@ -107,23 +179,6 @@ else
 
 $loginTest->registerNewUser("user1", "123");
 $loginTest->login("user1", "123");
-
-$userId = ItemAttribute::getItemAttribute($loginTest->userLogin, "Id");
-$user = $dbUserRepository->loadById($userId->value); //we will load all user's data
-echo "\n\r";
-echo "User:";
-$loginTest->dbUserRepository->writeOutSimpleData($user);
-echo "\n\r";
-echo "\n\r";
-echo "User_UserRolesCollection:";
-$userRolesCollectionAttribute = ItemAttribute::getItemAttribute($user[0], "UserRolesCollection");
-$loginTest->dbUserRepository->writeOutSimpleData($userRolesCollectionAttribute->value);
-echo "\n\r";
-echo "UserDefaultRole->Name: ";
-$defaultUserRoleAttribute = ItemAttribute::getItemAttribute($user[0], "DefaultUserRole");
-$defaultUserRoleAttributeNameAttribute = ItemAttribute::getItemAttribute($defaultUserRoleAttribute->value, "Name");
-echo $defaultUserRoleAttributeNameAttribute->value;
-echo "\n\r";
-echo "\n\r";
+$loginTest->showUserSomeData();
 $loginTest->logout();
 ?>

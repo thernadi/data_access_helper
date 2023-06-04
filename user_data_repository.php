@@ -8,8 +8,8 @@ include_once __DIR__."/userrole_data_repository.php";
 
 class DbUserRepository extends DbRepository
 {
-	protected $dbUserSettingRepository = null;
-	protected $dbUserRoleRepository = null;
+	public $dbUserSettingRepository = null;
+	public $dbUserRoleRepository = null;
 
 	public function __construct($connectionData, $dbUserSettingRepository, $dbUserRoleRepository)
 	{
@@ -47,7 +47,7 @@ class DbUserRepository extends DbRepository
 		$ItemAttribute->setReferenceDescriptor(new ReferenceDescriptor("User_UserRolesCollection", "UserRole", $returnValue, $this->dbUserRoleRepository->itemAttributes, "UserRole", "Id"));
 
 		$ItemAttribute = ItemAttribute::getItemAttribute($returnValue, "UserSettingsCollection");
-		$ItemAttribute->setReferenceDescriptor(new ReferenceDescriptor("User_UserRolesCollection", "User_UserRolesCollection_UserSettingsCollection", $returnValue, $this->getUserUserRolesCollectionUserSettingsCollectionItemAttributes(), "Id", "User_UserRolesCollection",));
+		$ItemAttribute->setReferenceDescriptor(new ReferenceDescriptor("User_UserRolesCollection", "User_UserRolesCollection_UserSettingsCollection", $returnValue, $this->getUserUserRolesCollectionUserSettingsCollectionItemAttributes(), "Id", "User_UserRolesCollection"));
 
 		return $returnValue;
 	}

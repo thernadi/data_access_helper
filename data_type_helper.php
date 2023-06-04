@@ -1,6 +1,5 @@
-//2022 Tamas Hernadi
-
 <?php
+//Copyright (c) 2022 Tamas Hernadi
 
 abstract class DataType
 {

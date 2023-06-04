@@ -1,7 +1,9 @@
 <?php
-//2022 Tamas Hernadi
+//Copyright (c) 2022 Tamas Hernadi
 //Data Access Helper For MySQL Database 
-//Dependency:data_type_helper.php 
+//Dependency: 
+//- data_type_helper.php 
+//- common_static_helper.php
 
 //Current version: 2.0
 //Database table rules: all table contains the fields belows in database.
@@ -12,6 +14,7 @@
 //Extends class from DbRepository class for using
 
 include_once __DIR__."/data_type_helper.php";
+include_once __DIR__."/common_static_helper.php";
 
 class ConnectionData
 {
@@ -446,8 +449,7 @@ class DbRepository extends DataAccessHelper
 		return $this->loadByFilter($filters, array(), array("Id"), "asc");
 	}
 
-	//This function can load one item by "Id" with the type of "DT_ITEM" item together but the "DT_LIST" are loaded. 
-	//TODO: list type and item type 
+	//This function can load one item by "Id" with the type of "DT_ITEM" item together and the "DT_LIST" are loaded. 
 	public function loadById($id, $tbl = null, $idAttributeName = null,  $itemAttributes = null)
 	{
 		if ($tbl === null)
@@ -599,7 +601,7 @@ class DbRepository extends DataAccessHelper
 						}
 					}
 				}
-				echo "---\n\r";
+				Common::writeOutLetter("-", 50);
 			}
 		}	
 		echo "\n\r";		
