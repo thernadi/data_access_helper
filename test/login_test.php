@@ -1,5 +1,5 @@
 <?php
-include_once __DIR__."/../user_data_repository.php";
+include_once __DIR__."/user_data_repository.php";
 
 class LoginTest
 {
@@ -142,7 +142,7 @@ class LoginTest
 			$itemAttributeUserRoleCollection->value[] = $userRoleCollectionItem;
 
 
-			$this->dbUserRepository->save($newUser); //This save function is saving only base data yet. TODO: DT_LIST collection's saving.
+			$this->dbUserRepository->save($newUser);
 			echo "User registered!\n\r";
 		}
 	}
@@ -177,8 +177,8 @@ else
 }
 
 
-$loginTest->registerNewUser("user2", "123");
-$loginTest->login("user2", "123");
+$loginTest->registerNewUser("user3", "123");
+$loginTest->login("user3", "123");
 $loginTest->showUserSomeData();
 $loginTest->logout();
 ?>

@@ -1,5 +1,5 @@
 <?php
-include_once __DIR__."/data_access_helper.php";
+include_once __DIR__."/../data_access_helper.php";
 include_once __DIR__."/usersetting_data_repository.php";
 include_once __DIR__."/userrole_data_repository.php";
 //------------------------------------

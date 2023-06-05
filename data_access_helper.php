@@ -175,10 +175,13 @@ class DataAccessHelper
 			echo "\n\rError in the query!\n\r" . $stmt->error . "\n\rQuery:\n\r" . $query. "\n\rParameters:\n\r".var_dump($bindingParams)."\n\r";
 		}
 		
-		if (count($returnValue) === 0 && $item !== null) //insert/update
+		if (count($returnValue) === 0 && $item !== null)
 		{
 			$attributeItemId = ItemAttribute::getItemAttribute($item, "Id");
-			$attributeItemId->value = $this->mysqli->insert_id;
+			if ($attributeItemId->value === null)
+			{
+				$attributeItemId->value = $this->mysqli->insert_id;
+			}
 		}
 		
 		$stmt->close();
