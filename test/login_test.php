@@ -177,8 +177,8 @@ else
 }
 
 
-$loginTest->registerNewUser("user1", "123");
-$loginTest->login("user1", "123");
+$loginTest->registerNewUser("user2", "123");
+$loginTest->login("user2", "123");
 $loginTest->showUserSomeData();
 $loginTest->logout();
 ?>

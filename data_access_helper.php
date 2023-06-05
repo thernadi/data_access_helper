@@ -141,7 +141,7 @@ class DataAccessHelper
 	}
 
 	//prepeared-statement query
-	public function execute($query, $params, $isLoadedId = false)
+	public function execute($query, $params, &$item = null)
 	{
 		$this->init();
 		$returnValue = array();
@@ -175,9 +175,10 @@ class DataAccessHelper
 			echo "\n\rError in the query!\n\r" . $stmt->error . "\n\rQuery:\n\r" . $query. "\n\rParameters:\n\r".var_dump($bindingParams)."\n\r";
 		}
 		
-		if (in_array("Id", $returnValue) && $isLoadedId)
+		if (count($returnValue) === 0 && $item !== null) //insert/update
 		{
-			$returnValue["Id"] = $this->mysqli->insert_id;
+			$attributeItemId = ItemAttribute::getItemAttribute($item, "Id");
+			$attributeItemId->value = $this->mysqli->insert_id;
 		}
 		
 		$stmt->close();
@@ -476,7 +477,7 @@ class DbRepository extends DataAccessHelper
 			{
 				if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_ITEM)
 				{
-					$itemAttributeId =  ItemAttribute::getItemAttribute($value->value, $value->referenceDescriptor->targetMappingAttributeName);
+					$itemAttributeId = ItemAttribute::getItemAttribute($value->value, $value->referenceDescriptor->targetMappingAttributeName);
 					$value->value = $this->loadById($itemAttributeId->value, $value->referenceDescriptor->targetTableName, $value->referenceDescriptor->targetMappingAttributeName, $value->value)[0];
 				}
 				else if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_LIST)
@@ -490,11 +491,16 @@ class DbRepository extends DataAccessHelper
 		return $returnValue;
 	}
 
-	//TODO: list type and item type ability 
 	//$item: ItemAttribute array	
-	public function save($item) 
+	public function save($item, $tbl = null) 
 	{
 		$params = $this->getParamsByItem($item);		
+
+		if ($tbl === null)
+		{
+			$tbl = $this->tbl;
+		}
+
 		$itemAttributeId = ItemAttribute::getItemAttribute($item, "Id");
 	
 		$q_fnames = "";
@@ -507,7 +513,7 @@ class DbRepository extends DataAccessHelper
 			}
 			$q_fnames = substr($q_fnames, 0, strlen($q_fnames) - 2);
 			$params[] = new BindingParam("Id", "i", $itemAttributeId->value);
-			$query = "UPDATE ". $this->tbl ." SET ".$q_fnames." WHERE Id = ?";
+			$query = "UPDATE ". $tbl ." SET ".$q_fnames." WHERE Id = ?";
 			$this->execute($query, $params);
 		}
 		else //INSERT
@@ -519,8 +525,22 @@ class DbRepository extends DataAccessHelper
 			}
 			$q_fnames = substr($q_fnames, 0, strlen($q_fnames) - 2);
 			$q_fparams = substr($q_fparams, 0, strlen($q_fparams) - 2);
-			$query = "INSERT INTO ". $this->tbl ." (".$q_fnames.") VALUES (".$q_fparams.")";
-			$this->execute($query, $params, true);
+			$query = "INSERT INTO ". $tbl ." (".$q_fnames.") VALUES (".$q_fparams.")";
+			$this->execute($query, $params, $item);
+		}
+
+		foreach($item as $key => $value)
+		{
+			if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_LIST)
+			{
+				$itemAttributeSourceId = ItemAttribute::getItemAttribute($item, "Id");
+				foreach($value->value as $collectionItemKey => $collectionItemValue)
+				{
+					$itemCollectionReferenceAttribute = ItemAttribute::getItemAttribute($collectionItemValue, $value->referenceDescriptor->targetMappingAttributeName);
+					$itemCollectionReferenceAttribute->value = $itemAttributeSourceId->value;
+					$this->save($collectionItemValue, $value->referenceDescriptor->targetTableName);
+				}
+			}	
 		}
 	}
 	
