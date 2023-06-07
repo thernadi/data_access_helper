@@ -299,7 +299,7 @@ class DbRepository extends DataAccessHelper
 					else if ($itemAttribute->referenceDescriptor !== null 
 					&& $itemAttribute->dataType === DataType::DT_ITEM)
 					{
-						$itemAttribute->value = $this->getNewItemInstance($itemAttribute->referenceDescriptor->targetItemAttibutes);
+						$itemAttribute->value = $this->getNewItemInstance($itemAttribute->referenceDescriptor->targetItemAttributes);
 						if ($itemAttribute->value !== null)
 						{
 							$itemAttributeId = ItemAttribute::getItemAttribute($itemAttribute->value, $itemAttribute->referenceDescriptor->targetMappingAttributeName);
@@ -485,8 +485,8 @@ class DbRepository extends DataAccessHelper
 				}
 				else if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_LIST)
 				{
-					$itemAttributeId = ItemAttribute::getItemAttribute($returnValue[0], $value->referenceDescriptor->sourceMappingAttributeName);
-					$value->value = $this->loadById($itemAttributeId->value, $value->referenceDescriptor->targetTableName, $value->referenceDescriptor->targetMappingAttributeName, $value->referenceDescriptor->targetItemAttibutes);
+					$itemAttributeId = ItemAttribute::getItemAttribute($outterValue, $value->referenceDescriptor->sourceMappingAttributeName);
+					$value->value = $this->loadById($itemAttributeId->value, $value->referenceDescriptor->targetTableName, $value->referenceDescriptor->targetMappingAttributeName, $value->referenceDescriptor->targetItemAttributes);
 				}
 			}
 		}
@@ -536,15 +536,14 @@ class DbRepository extends DataAccessHelper
 		{
 			if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_LIST)
 			{
-				$itemAttributeSourceId = ItemAttribute::getItemAttribute($item, "Id");
 				foreach($value->value as $collectionItemKey => $collectionItemValue)
 				{
 					$itemCollectionReferenceAttribute = ItemAttribute::getItemAttribute($collectionItemValue, $value->referenceDescriptor->targetMappingAttributeName);
-					$itemCollectionReferenceAttribute->value = $itemAttributeSourceId->value;
+					$itemCollectionReferenceAttribute->value = $itemAttributeId->value;
 					$this->save($collectionItemValue, $value->referenceDescriptor->targetTableName);
 				}
 			}	
-		}
+		}		
 	}
 	
 	public function deleteAll()
@@ -554,14 +553,30 @@ class DbRepository extends DataAccessHelper
 		$this->execute($query, $params);
 	}
 	
-
-	//TODO: list type and item type ability
-	public function deleteById($id)
+	public function delete($item, $tbl = null)
 	{
-		$query = "DELETE FROM " . $this->tbl." WHERE Id = ?";
+		if ($tbl === null)
+		{
+			$tbl = $this->tbl;
+		}
+
+		$itemAttributeId = ItemAttribute::getItemAttribute($item, "Id");
+
+		$query = "DELETE FROM " . $tbl." WHERE Id = ?";
 		$params = array();
-		$params[] = new BindingParam("Id", "i", $id);
+		$params[] = new BindingParam("Id", "i", $itemAttributeId->value);			
 		$this->execute($query, $params);
+
+		foreach($item as $key => $value)
+		{
+			if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_LIST)
+			{
+				foreach($value->value as $collectionItemKey => $collectionItemValue)
+				{
+					$this->delete($collectionItemValue, $value->referenceDescriptor->targetTableName);
+				}
+			}	
+		}
 	}
 
 	public function getMaxField($fieldName)

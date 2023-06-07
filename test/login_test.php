@@ -147,7 +147,27 @@ class LoginTest
 		}
 	}
 
-	public function checkUserInDB($filters, &$userLogin)
+	public function deleteUser($loginName)
+	{	
+		$currentUser = null;
+		$filters = array();
+		$filters[] = new BindingParam("IsDeleted", "i", 0);
+		$filters[] = new BindingParam("LoginName", "s", $loginName);		
+		if (!$this->checkUserInDB($filters, $currentUser))
+		{		
+			echo "User is not existed!\n\r";
+		}
+		else
+		{
+			$currentUserItemAttributeId = ItemAttribute::getItemAttribute($currentUser[0], "Id");
+			//We will load the user's all data
+			$currentUser = $this->dbUserRepository->loadById($currentUserItemAttributeId->value); 
+			$this->dbUserRepository->delete($currentUser[0]);
+			echo "User deleted!\n\r";
+		}
+	}
+
+	protected function checkUserInDB($filters, &$userLogin)
 	{
 		$returnValue = false;
 		$userLogin = $this->dbUserRepository->loadByFilter2($filters);
@@ -177,8 +197,9 @@ else
 }
 
 
-$loginTest->registerNewUser("user3", "123");
-$loginTest->login("user3", "123");
+$loginTest->registerNewUser("user1", "123");
+$loginTest->login("user1", "123");
 $loginTest->showUserSomeData();
 $loginTest->logout();
+$loginTest->deleteUser("user1"); //physically delete
 ?>

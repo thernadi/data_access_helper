@@ -68,16 +68,16 @@ class ReferenceDescriptor
     public $sourceTableName = null;
 	public $targetTableName = null;	
 	public $sourceItemAttributes = null;
-	public $targetItemAttibutes = null;	
+	public $targetItemAttributes = null;	
 	public $sourceMappingAttributeName = null;
 	public $targetMappingAttributeName = null;
 
-	public function __construct($sourceTableName, $targetTableName, $sourceItemAttributes, $targetItemAttibutes, $sourceMappingAttributeName, $targetMappingAttributeName) 
+	public function __construct($sourceTableName, $targetTableName, $sourceItemAttributes, $targetItemAttributes, $sourceMappingAttributeName, $targetMappingAttributeName) 
 	{	
 		$this->sourceTableName = $sourceTableName;
 		$this->targetTableName = $targetTableName;						
 		$this->sourceItemAttributes = $sourceItemAttributes;
-		$this->targetItemAttibutes = $targetItemAttibutes;			
+		$this->targetItemAttributes = $targetItemAttributes;			
 		$this->sourceMappingAttributeName = $sourceMappingAttributeName;	
 		$this->targetMappingAttributeName = $targetMappingAttributeName;
 	}
