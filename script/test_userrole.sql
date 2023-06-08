@@ -26,8 +26,8 @@ DROP TABLE IF EXISTS `userrole`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `userrole` (
   `Id` int NOT NULL AUTO_INCREMENT,
-  `Code` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
-  `Name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `Code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `Name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `IsDeleted` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`Id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -52,4 +52,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-05-31 19:32:11
+-- Dump completed on 2023-06-08 17:34:52

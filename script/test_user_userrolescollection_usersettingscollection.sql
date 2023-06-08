@@ -18,29 +18,34 @@ USE `test`;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `usersetting`
+-- Table structure for table `user_userrolescollection_usersettingscollection`
 --
 
-DROP TABLE IF EXISTS `usersetting`;
+DROP TABLE IF EXISTS `user_userrolescollection_usersettingscollection`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `usersetting` (
+CREATE TABLE `user_userrolescollection_usersettingscollection` (
   `Id` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(100) NOT NULL,
-  `DefaultValue` varchar(100) DEFAULT NULL,
+  `User_UserRolesCollection` int NOT NULL,
+  `UserSetting` int NOT NULL,
+  `Value` varchar(100) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci DEFAULT NULL,
   `IsDeleted` tinyint(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3;
+  PRIMARY KEY (`Id`),
+  KEY `FK_User_UserRolesCollection_UserSettingsCollection_UserSett_idx` (`UserSetting`),
+  KEY `FK_User_UserRolesCollection_UserSettingsCollection_User_Use_idx` (`User_UserRolesCollection`),
+  CONSTRAINT `FK_user_userrolescollection_usersettingscollection_user_urc` FOREIGN KEY (`User_UserRolesCollection`) REFERENCES `user_userrolescollection` (`Id`),
+  CONSTRAINT `FK_user_userrolescollection_usersettingscollection_usersetting` FOREIGN KEY (`UserSetting`) REFERENCES `usersetting` (`Id`)
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `usersetting`
+-- Dumping data for table `user_userrolescollection_usersettingscollection`
 --
 
-LOCK TABLES `usersetting` WRITE;
-/*!40000 ALTER TABLE `usersetting` DISABLE KEYS */;
-INSERT INTO `usersetting` VALUES (1,'ACTIVE','0',0),(2,'LOGLEVEL','0',0),(3,'ACCESS_READ','0',0),(4,'ACCES_WRITE','0',0),(5,'ACCESS_DOWNLOAD','0',0);
-/*!40000 ALTER TABLE `usersetting` ENABLE KEYS */;
+LOCK TABLES `user_userrolescollection_usersettingscollection` WRITE;
+/*!40000 ALTER TABLE `user_userrolescollection_usersettingscollection` DISABLE KEYS */;
+INSERT INTO `user_userrolescollection_usersettingscollection` VALUES (1,1,1,'1',0),(2,1,2,'10',0),(3,1,3,'1',0),(4,1,4,'1',0),(5,1,5,'1',0),(6,2,1,'0',0),(7,3,1,'0',0);
+/*!40000 ALTER TABLE `user_userrolescollection_usersettingscollection` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 

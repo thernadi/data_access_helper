@@ -151,7 +151,6 @@ class LoginTest
 	{	
 		$currentUser = null;
 		$filters = array();
-		$filters[] = new BindingParam("IsDeleted", "i", 0);
 		$filters[] = new BindingParam("LoginName", "s", $loginName);		
 		if (!$this->checkUserInDB($filters, $currentUser))
 		{		

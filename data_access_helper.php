@@ -5,7 +5,7 @@
 //- data_type_helper.php 
 //- common_static_helper.php
 
-//Current version: 2.0
+//Current version: 2.17
 //Database table rules: all table contains the fields belows in database.
 //Table level existed fields:
 //Id (int, required, primary key)
@@ -553,19 +553,26 @@ class DbRepository extends DataAccessHelper
 		$this->execute($query, $params);
 	}
 	
-	public function delete($item, $tbl = null)
+	public function delete($item, $tbl = null, &$queryBuffer = null)
 	{
+		$first = false;
 		if ($tbl === null)
 		{
 			$tbl = $this->tbl;
+			$first = true;
+		}
+
+		if ($queryBuffer === null)
+		{
+			$queryBuffer = array();
 		}
 
 		$itemAttributeId = ItemAttribute::getItemAttribute($item, "Id");
 
 		$query = "DELETE FROM " . $tbl." WHERE Id = ?";
 		$params = array();
-		$params[] = new BindingParam("Id", "i", $itemAttributeId->value);			
-		$this->execute($query, $params);
+		$params[] = new BindingParam("Id", "i", $itemAttributeId->value);	
+		$queryBuffer[] = array("query" => $query, "params" => $params);		
 
 		foreach($item as $key => $value)
 		{
@@ -573,9 +580,17 @@ class DbRepository extends DataAccessHelper
 			{
 				foreach($value->value as $collectionItemKey => $collectionItemValue)
 				{
-					$this->delete($collectionItemValue, $value->referenceDescriptor->targetTableName);
+					$this->delete($collectionItemValue, $value->referenceDescriptor->targetTableName, $queryBuffer);
 				}
 			}	
+		}
+
+		if ($first)
+		{
+			for($i = count($queryBuffer) - 1; $i >= 0; $i--)
+			{
+				$this->execute($queryBuffer[$i]["query"], $queryBuffer[$i]["params"]);
+			}
 		}
 	}
 

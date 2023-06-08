@@ -29,7 +29,11 @@ CREATE TABLE `user_userrolescollection` (
   `User` int NOT NULL,
   `UserRole` int NOT NULL,
   `IsDeleted` tinyint(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`Id`)
+  PRIMARY KEY (`Id`),
+  KEY `FK_User_UserRolesCollection_User_idx` (`User`),
+  KEY `FK_User_UserRolesCollection_UserRoles_idx` (`UserRole`),
+  CONSTRAINT `FK_User_UserRolesCollection_User` FOREIGN KEY (`User`) REFERENCES `user` (`Id`),
+  CONSTRAINT `FK_User_UserRolesCollection_UserRoles` FOREIGN KEY (`UserRole`) REFERENCES `userrole` (`Id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -52,4 +56,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-05-31 19:32:12
+-- Dump completed on 2023-06-08 17:34:52

@@ -14,3 +14,14 @@ Currently, it can:
 - Access a database like a repository with functions to access repository records by performing operations to create, read, update, and delete repository items
 
 - Manipulate database record column values according to the respective data type
+
+
+//FURTHER DEVELOPMENT PHASE
+- Catching exceptions better (try - catch)
+- Datatable generation by the described attributes with foreign keys constraints.
+- Caching
+- Filtering/Searching items with more relations via BindingParam, FilterParam   
+- ItemAttribute collection's joining ability to other ones via condition in memory. 
+- Better data attribute's searching in specially for collectionitem(DT_LIST)'s attributes.
+- Better function and parameters description
+- Documentation

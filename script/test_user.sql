@@ -32,7 +32,9 @@ CREATE TABLE `user` (
   `IsLogged` tinyint(1) NOT NULL DEFAULT '0',
   `IsDeleted` tinyint(1) NOT NULL DEFAULT '0',
   `DefaultUserRole` int DEFAULT NULL,
-  PRIMARY KEY (`Id`)
+  PRIMARY KEY (`Id`),
+  KEY `FK_User_UserRole_idx` (`DefaultUserRole`),
+  CONSTRAINT `FK_User_UserRole` FOREIGN KEY (`DefaultUserRole`) REFERENCES `userrole` (`Id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -55,4 +57,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-06-01  0:07:38
+-- Dump completed on 2023-06-08 17:34:52
