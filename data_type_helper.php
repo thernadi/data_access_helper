@@ -36,15 +36,22 @@ class Param
 	
 	public static function getParam($name, $paramArray)
 	{
-		$returnValue = null;		
-		foreach($paramArray as $param)
-		{
-			if ($param->name === $name)
+		$returnValue = null;
+		try
+		{	
+			foreach($paramArray as $param)
 			{
-				$returnValue = $param;
-				break;
+				if ($param->name === $name)
+				{
+					$returnValue = $param;
+					break;
+				}		
 			}		
-		}		
+		}
+		catch (Exception $e)
+		{
+			echo $e->getMessage();
+		}
 		return $returnValue;
 	}
 }
@@ -172,86 +179,164 @@ class ItemAttribute
 	public static function getSimpleCopiedItemAttributeArray($array)
 	{
 		$returnValue = array();
-		foreach($array as $val) 
+		try
 		{
-			if(is_array($val))
+			foreach($array as $val) 
 			{
-				$returnValue[] = ItemAttribute::getSimpleCopiedItemAttributeArray($val);	
-			}
-			else if(is_object($val))
-			{	
-				$item = new ItemAttribute($val->name, $val->caption, $val->dataType, $val->dataFormat, $val->required, $val->readonly, $val->isVisible, $val->defaultValue, $val->defaultCaption);				
-				$item->value = $val->value;
-				$item->orderByIndex = $val->orderByIndex;
-
-				if ($val->dataType === DataType::DT_LIST || $val->dataType === DataType::DT_ITEM)
+				if(is_array($val))
 				{
-					$item->setReferenceDescriptor($val->referenceDescriptor);
+					$returnValue[] = ItemAttribute::getSimpleCopiedItemAttributeArray($val);	
 				}
-				$returnValue[] = $item;
+				else if(is_object($val))
+				{	
+					$item = new ItemAttribute($val->name, $val->caption, $val->dataType, $val->dataFormat, $val->required, $val->readonly, $val->isVisible, $val->defaultValue, $val->defaultCaption);				
+					$item->value = $val->value;
+					$item->orderByIndex = $val->orderByIndex;
+
+					if ($val->dataType === DataType::DT_LIST || $val->dataType === DataType::DT_ITEM)
+					{
+						$item->setReferenceDescriptor($val->referenceDescriptor);
+					}
+					$returnValue[] = $item;
+				}
 			}
 		}
-			
+		catch (Exception $e)
+		{
+			echo $e->getMessage();
+		}	
 		return $returnValue;		
 	}
 		
 	//$itemAttributes: ItemAttribute array
 	public static function getItemAttribute($itemAttributes, $attributeName) 
-	{
+	{	
 		$returnValue = null;	
-		
-		foreach($itemAttributes as $key => $val) 
-		{
-			if ($val->name === $attributeName)
+		try
+		{			
+			if(str_contains($attributeName, "."))
 			{
-				$returnValue = $val;
-				break;
-			}			
-		}	
+				$attributeNameExploded = explode(".", $attributeName);				
+				$itemAttributes = ItemAttribute::getItemAttribute($itemAttributes, $attributeNameExploded[0]);
+
+				$attributeName = "";
+				$first = true;
+				foreach($attributeNameExploded as $val)
+				{
+					if ($first)
+					{
+						$first = false;
+						continue;
+					}
+
+					$attributeName .= $val.".";
+				}
+				$attributeName = substr($attributeName, 0, strlen($attributeName) - 1);
+
+				$itemAttributes = $itemAttributes->value;
+				if (count($itemAttributes) > 0 
+				&& is_array($itemAttributes[0]))
+				{	
+					$returnValue = array();
+					foreach($itemAttributes as $val)
+					{	
+						$returnValue[] = ItemAttribute::getItemAttribute($val, $attributeName);
+					}
+				}
+				else
+				{
+					$returnValue = ItemAttribute::getItemAttribute($itemAttributes, $attributeName);
+				}
+			}
+			else
+			{
+				if (count($itemAttributes) > 0 
+				&& is_object($itemAttributes[0]))
+				{
+					foreach($itemAttributes as $key => $val) 
+					{		
+						if($val->name === $attributeName)
+						{
+							$returnValue = $val;
+							break;
+						}			
+					}
+				}
+			}		
+		}
+		catch (Exception $e)
+		{
+			echo $e->getMessage();
+		}
+
+		$returnValue = ItemAttribute::eliminateOutterArray($returnValue);
 		return $returnValue;		
+	}
+
+	private static function eliminateOutterArray($param)
+	{
+		$returnValue = $param;
+		if (!is_object($param) 
+		&& count($param) > 0 
+		&& is_array($param[0]))
+		{
+			$returnValue = array();
+			foreach($param as $val)
+			{
+				$returnValue = array_merge($returnValue, ItemAttribute::eliminateOutterArray($val));
+			}
+		}
+		return $returnValue;
 	}
 	
 	public function convertedValue($value)
 	{
 		$returnValue = $value;
-		if($this->dataFormat !== null)
+		try
 		{
-			switch ($this->dataType)
+			if($this->dataFormat !== null)
 			{
-				case DataType::DT_DATETIME:
-					$date = strtotime($value);
-					$returnValue = date($this->dataFormat, $date);
-				break;
-				case DataType::DT_TIMESTAMP:
-					$date = date_create();
-					date_timestamp_set($date, $value);
-					$returnValue = date_format($date, $this->dataFormat);
-				break;
-				case DataType::DT_DATETIME_ORIGINAL: //Cannot use in mysql db data
-					$date = strtotime($value);
-					$returnValue = $date;
-				break;
-				case DataType::DT_TIMESTAMP_ORIGINAL: //Cannot use in mysql db data
-					$date = date_create();
-					date_timestamp_set($date, $value);
-					$returnValue = $date;
-				break;				
-				case DataType::DT_FLOAT:
-					$returnValue = (float)$value;
-				break;
-				case DataType::DT_DOUBLE:
-					$returnValue = (double)$value;
-				break;
-				case DataType::DT_INT:
-					$returnValue = (int)$value;
-				break;		
-				case DataType::DT_BOOL:
-					$returnValue = (bool)$value;
-				break;				
-				default:
-					$returnValue = $value;
-			}
-		}		
+				switch ($this->dataType)
+				{
+					case DataType::DT_DATETIME:
+						$date = strtotime($value);
+						$returnValue = date($this->dataFormat, $date);
+					break;
+					case DataType::DT_TIMESTAMP:
+						$date = date_create();
+						date_timestamp_set($date, $value);
+						$returnValue = date_format($date, $this->dataFormat);
+					break;
+					case DataType::DT_DATETIME_ORIGINAL: //Cannot use in mysql db data
+						$date = strtotime($value);
+						$returnValue = $date;
+					break;
+					case DataType::DT_TIMESTAMP_ORIGINAL: //Cannot use in mysql db data
+						$date = date_create();
+						date_timestamp_set($date, $value);
+						$returnValue = $date;
+					break;				
+					case DataType::DT_FLOAT:
+						$returnValue = (float)$value;
+					break;
+					case DataType::DT_DOUBLE:
+						$returnValue = (double)$value;
+					break;
+					case DataType::DT_INT:
+						$returnValue = (int)$value;
+					break;		
+					case DataType::DT_BOOL:
+						$returnValue = (bool)$value;
+					break;				
+					default:
+						$returnValue = $value;
+				}
+			}		
+		}
+		catch (Exception $e)
+		{
+			echo $e->getMessage();
+		}
 		return $returnValue;
 	}
 }

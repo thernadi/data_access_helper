@@ -1,5 +1,5 @@
 # data_access_helper
-PHP Data Access Layer Helper
+PHP Data Access Layer Helper & DataBase Repository
 
 This package can run queries to access data from a MySQL database.
 
@@ -15,13 +15,13 @@ Currently, it can:
 
 - Manipulate database record column values according to the respective data type
 
+- Better data attribute's searching specially for collectionitem (DT_LIST)'s attributes
 
 //FURTHER DEVELOPMENT PHASE
-- Catching exceptions better (try - catch)
-- Datatable generation by the described attributes with foreign keys constraints.
+- Filtering searching items with more relations via BindingParam, FilterParam
 - Caching
-- Filtering/Searching items with more relations via BindingParam, FilterParam   
-- ItemAttribute collection's joining ability to other ones via condition in memory. 
-- Better data attribute's searching in specially for collectionitem(DT_LIST)'s attributes.
+- Historical data handling with DBHistoricalRepository
+- Datatable generation by the described attributes with foreign keys constraints.
+- Merging of ItemAttribute collections
 - Better function and parameters description
 - Documentation

@@ -29,11 +29,11 @@ class LoginTest
 			$itemAttributeLastLoginDateTime->value = $currentDate;	
 			$this->dbUserRepository->save($this->userLogin);	
 			$returnValue = true;
-			echo "Login success!\n\r";
+			echo "Login success!".LINE_SEPARATOR;
 		}
 		else
 		{
-			echo "Login failed!\n\r";
+			echo "Login failed!".LINE_SEPARATOR;
 		}
 		return $returnValue;
     }
@@ -46,7 +46,7 @@ class LoginTest
 			$itemAttributeIsLogged->value = 0;
 			$this->dbUserRepository->save($this->userLogin);	
 			$this->userLogin = null;
-			echo "Logout success!\n\r";
+			echo "Logout success!".LINE_SEPARATOR;
 		}
 	}
 	
@@ -57,32 +57,59 @@ class LoginTest
 			$userId = ItemAttribute::getItemAttribute($this->userLogin, "Id");
 			//We will load the user's all data
 			$user = $this->dbUserRepository->loadById($userId->value); 
-			echo "\n\r";
+			echo LINE_SEPARATOR;
 			echo "User:";
 			$this->dbUserRepository->writeOutSimpleData($user);
-			echo "UserDefaultRole->Name: ";
-			$defaultUserRoleAttribute = ItemAttribute::getItemAttribute($user[0], "DefaultUserRole");
-			$defaultUserRoleAttributeNameAttribute = ItemAttribute::getItemAttribute($defaultUserRoleAttribute->value, "Name");
-			echo $defaultUserRoleAttributeNameAttribute->value;
-			echo "\n\r";
+
+			echo "UserDefaultRole.Name: ";
+			$defaultUserRoleAttributeNameAttribute = ItemAttribute::getItemAttribute($user[0], "DefaultUserRole.Name");
+			echo $defaultUserRoleAttributeNameAttribute->value;			
+			echo LINE_SEPARATOR;
+			Common::writeOutLetter("-", 50);
+
+			echo "User_UserRolesCollection.UserRole.Code:".LINE_SEPARATOR;
+			$userRolesCollectionUserRoleAttributeCodeAttribute = ItemAttribute::getItemAttribute($user[0], "UserRolesCollection.UserRole.Code");
+			foreach($userRolesCollectionUserRoleAttributeCodeAttribute as $val)
+			{
+				echo $val->value.LINE_SEPARATOR;
+			}
+			echo LINE_SEPARATOR;
+			Common::writeOutLetter("-", 50);
+
+			echo "UserRolesCollection.UserSettingsCollection.Value".LINE_SEPARATOR;
+			$userRolesCollectionUserSettingsCollectionAttributeValueAttribute = ItemAttribute::getItemAttribute($user[0], "UserRolesCollection.UserSettingsCollection.Value");
+			foreach($userRolesCollectionUserSettingsCollectionAttributeValueAttribute as $val)
+			{
+				echo $val->value.LINE_SEPARATOR;
+			}
+
+			echo LINE_SEPARATOR;	
 			Common::writeOutLetter("-", 50);
 			echo "User_UserRolesCollection:";
 			$userRolesCollectionAttribute = ItemAttribute::getItemAttribute($user[0], "UserRolesCollection");
 			$this->dbUserRepository->writeOutSimpleData($userRolesCollectionAttribute->value);
-			echo "User_UserRolesCollection UserRole names:";
-			echo "\n\r";
+			echo "User_UserRolesCollection UserRole names with settings and values:";
+			echo LINE_SEPARATOR;
 			foreach($userRolesCollectionAttribute->value as $userRoleCollectionItem)
 			{
-				$userRoleAttribute = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserRole");	
-				$userRoleAttributeNameAttribute = ItemAttribute::getItemAttribute($userRoleAttribute->value, "Name");
+				$userRoleAttributeNameAttribute = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserRole.Name");	
 				echo $userRoleAttributeNameAttribute->value;
-				echo "\n\r";			
+				$userSettingAttributeNameAttribute = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserSettingsCollection.UserSetting.Name");	
+				foreach($userSettingAttributeNameAttribute as $value)
+				{
+					echo " -> ".$value->value;
+
+					$userSettingCollectionAttributeValueAttribute = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserSettingsCollection.Value");
+					echo " -> ".$userSettingCollectionAttributeValueAttribute[0]->value;
+					echo LINE_SEPARATOR;					
+				}
 			}
-			echo "\n\r";	
+
+			echo LINE_SEPARATOR;	
 		}
 		else
 		{
-			echo "User is not logged in!\n\r";
+			echo "User is not logged in!".LINE_SEPARATOR;
 		}
 	}
 
@@ -94,7 +121,7 @@ class LoginTest
 		$filters[] = new BindingParam("LoginName", "s", $loginName);		
 		if ($this->checkUserInDB($filters, $newUser))
 		{		
-			echo "User is already existed!\n\r";
+			echo "User is already existed!".LINE_SEPARATOR;
 		}
 		else
 		{
@@ -117,8 +144,9 @@ class LoginTest
 
 			//Set user's UserRolesCollection
 			$itemAttributeUserRoleCollection = ItemAttribute::getItemAttribute($newUser, "UserRolesCollection");
-			$userRoleCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionItemAttributes());
 
+			//Adding Guest UserRole
+			$userRoleCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionItemAttributes());
 			$filters = array();
 			$filters[] = new BindingParam("IsDeleted", "i", 0);
 			$filters[] = new BindingParam("Code", "s", "GUEST");		
@@ -141,9 +169,32 @@ class LoginTest
 
 			$itemAttributeUserRoleCollection->value[] = $userRoleCollectionItem;
 
+			//Adding Base_User UserRole
+			$userRoleCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionItemAttributes());
+			$filters = array();
+			$filters[] = new BindingParam("IsDeleted", "i", 0);
+			$filters[] = new BindingParam("Code", "s", "BASE_USER");		
+			$userRole = $this->dbUserRepository->dbUserRoleRepository->loadByFilter2($filters);
+			$itemAttributeUserRoleCollectionItemUserRole = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserRole");
+			$itemAttributeUserRoleCollectionItemUserRole->value = $userRole[0];
+
+			$filters = array();
+			$filters[] = new BindingParam("IsDeleted", "i", 0);
+			$filters[] = new BindingParam("Name", "s", "ACTIVE");		
+			$userSetting = $this->dbUserRepository->dbUserSettingRepository->loadByFilter2($filters);
+
+			$itemAttributeUserRoleCollectionItemUserSettingCollection = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserSettingsCollection");
+			$userRoleCollectionItemUserSettingCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionUserSettingsCollectionItemAttributes());
+			$userRoleCollectionItemUserSettingCollectionItemUserSetting = ItemAttribute::getItemAttribute($userRoleCollectionItemUserSettingCollectionItem, "UserSetting");
+			$userRoleCollectionItemUserSettingCollectionItemUserSetting->value = $userSetting[0];
+			$userRoleCollectionItemUserSettingCollectionItemValue = ItemAttribute::getItemAttribute($userRoleCollectionItemUserSettingCollectionItem, "Value");
+			$userRoleCollectionItemUserSettingCollectionItemValue->value = 1; //1 - TRUE, 0 - FALSE
+			$itemAttributeUserRoleCollectionItemUserSettingCollection->value[] = $userRoleCollectionItemUserSettingCollectionItem;
+
+			$itemAttributeUserRoleCollection->value[] = $userRoleCollectionItem;
 
 			$this->dbUserRepository->save($newUser);
-			echo "User registered!\n\r";
+			echo "User registered!".LINE_SEPARATOR;
 		}
 	}
 
@@ -154,7 +205,7 @@ class LoginTest
 		$filters[] = new BindingParam("LoginName", "s", $loginName);		
 		if (!$this->checkUserInDB($filters, $currentUser))
 		{		
-			echo "User is not existed!\n\r";
+			echo "User is not existed!".LINE_SEPARATOR;
 		}
 		else
 		{
@@ -162,7 +213,7 @@ class LoginTest
 			//We will load the user's all data
 			$currentUser = $this->dbUserRepository->loadById($currentUserItemAttributeId->value); 
 			$this->dbUserRepository->delete($currentUser[0]);
-			echo "User deleted!\n\r";
+			echo "User deleted!".LINE_SEPARATOR;
 		}
 	}
 
@@ -182,23 +233,29 @@ class LoginTest
 	}
 }
 
-$loginTest = new LoginTest($dbUserRepository);
-//Comment out if you want to modify this class for several times!
-//unset($_SESSION["LoginTest"]);
-
-if (!isset($_SESSION["LoginTest"]))
-{	
-	$_SESSION["LoginTest"] = json_encode($loginTest);
-}
-else
+try
 {
-	$loginTest = json_decode($loginTest); 
+	$loginTest = new LoginTest($dbUserRepository);
+	//Comment out if you want to modify this class for several times!
+	//unset($_SESSION["LoginTest"]);
+
+	if (!isset($_SESSION["LoginTest"]))
+	{	
+		$_SESSION["LoginTest"] = json_encode($loginTest);
+	}
+	else
+	{
+		$loginTest = json_decode($loginTest); 
+	}
+
+	$loginTest->registerNewUser("user1", "123");
+	$loginTest->login("user1", "123");
+	$loginTest->showUserSomeData();
+	$loginTest->logout();
+	$loginTest->deleteUser("user1"); //physically delete
 }
-
-
-$loginTest->registerNewUser("user1", "123");
-$loginTest->login("user1", "123");
-$loginTest->showUserSomeData();
-$loginTest->logout();
-$loginTest->deleteUser("user1"); //physically delete
+catch(Exception $e)
+{
+	echo $e->getMessage();
+}
 ?>
