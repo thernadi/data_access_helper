@@ -1,4 +1,9 @@
 <?php
+namespace Rasher\Test;
+use Rasher\Data\DataManagement\{BindingParam};
+use Rasher\Data\DataManagement\Type\{LogicalOperator,Param,FilterParam,ItemAttribute};
+use Rasher\Common\{Common};
+
 include_once __DIR__."/user_data_repository.php";
 
 class LoginTest
@@ -11,13 +16,20 @@ class LoginTest
 		$this->dbUserRepository = $dbUserRepository;
 	}
 
-	public function deleteBaseData()
+	public function deleteUserData()
+	{
+		$this->dbUserRepository->deleteAll_User_UserRolesCollection_UserSettingsCollection();
+		$this->dbUserRepository->deleteAll_User_UserRolesCollection();
+		$this->dbUserRepository->deleteAll();
+	}
+
+	public function deleteUserRelatedBaseData()
 	{
 		$this->dbUserRepository->dbUserRoleRepository->deleteAll();
 		$this->dbUserRepository->dbUserSettingRepository->deleteAll();
 	}
 
-	public function createBaseData()
+	public function createUserRelatedBaseData()
 	{
 		//UserRole
 		$filters = array();
@@ -160,20 +172,20 @@ class LoginTest
 			echo "User:";
 			$this->dbUserRepository->writeOutSimpleData($user);
 
-			echo "UserDefaultRole.Name: ";
+			echo "DefaultUserRole.Name: ";
 			$defaultUserRoleAttributeNameAttribute = ItemAttribute::getItemAttribute($user[0], "DefaultUserRole.Name");
 			echo $defaultUserRoleAttributeNameAttribute->value;			
 			echo LINE_SEPARATOR;
-			Common::writeOutLetter("-", 50);
+			Common::writeOutLetter("-", 50, LINE_SEPARATOR);
 
-			echo "User_UserRolesCollection.UserRole.Code:".LINE_SEPARATOR;
+			echo "UserRolesCollection.UserRole.Code:".LINE_SEPARATOR;
 			$userRolesCollectionUserRoleAttributeCodeAttribute = ItemAttribute::getItemAttribute($user[0], "UserRolesCollection.UserRole.Code");
 			foreach($userRolesCollectionUserRoleAttributeCodeAttribute as $val)
 			{
 				echo $val->value.LINE_SEPARATOR;
 			}
 			echo LINE_SEPARATOR;
-			Common::writeOutLetter("-", 50);
+			Common::writeOutLetter("-", 50, LINE_SEPARATOR);
 
 			echo "UserRolesCollection.UserSettingsCollection.Value".LINE_SEPARATOR;
 			$userRolesCollectionUserSettingsCollectionAttributeValueAttribute = ItemAttribute::getItemAttribute($user[0], "UserRolesCollection.UserSettingsCollection.Value");
@@ -183,11 +195,11 @@ class LoginTest
 			}
 
 			echo LINE_SEPARATOR;	
-			Common::writeOutLetter("-", 50);
-			echo "User_UserRolesCollection:";
+			Common::writeOutLetter("-", 50, LINE_SEPARATOR);
+			echo "UserRolesCollection:";
 			$userRolesCollectionAttribute = ItemAttribute::getItemAttribute($user[0], "UserRolesCollection");
 			$this->dbUserRepository->writeOutSimpleData($userRolesCollectionAttribute->value);
-			echo "User_UserRolesCollection UserRole codes with settings and values:";
+			echo "UserRolesCollection UserRole codes with settings and values:";
 			echo LINE_SEPARATOR;
 			foreach($userRolesCollectionAttribute->value as $userRoleCollectionItem)
 			{
@@ -320,7 +332,7 @@ class LoginTest
 		}
 	}
 
-	protected function checkItemInDB($dbRepository, $filters, &$item)
+	private function checkItemInDB($dbRepository, $filters, &$item)
 	{
 		$returnValue = false;
 		$item = $dbRepository->loadByFilter2($filters);
@@ -339,7 +351,10 @@ class LoginTest
 try
 {
 	//TEST
-	
+
+	//error_reporting(0); //only production environment
+	error_reporting(E_ALL); //for detail error reporting
+
 	$loginTest = new LoginTest($dbUserRepository);
 	//Comment out if you want to modify this class for several times!
 	//unset($_SESSION["LoginTest"]);
@@ -353,16 +368,17 @@ try
 		$loginTest = json_decode($loginTest); 
 	}
 
-	$loginTest->deleteBaseData(); //UserRole + UserSetting deleting
-	$loginTest->createBaseData(); //UserRole + UserSetting creating
+	$loginTest->deleteUserData(); //User and related data deleting
+	$loginTest->deleteUserRelatedBaseData(); //UserRole + UserSetting deleting
 
+	$loginTest->createUserRelatedBaseData(); //UserRole + UserSetting creating
 	$loginTest->registerNewUser("user1", "123");
 	$loginTest->login("user1", "123");
 	$loginTest->showUserSomeData();
 	$loginTest->logout();
 	$loginTest->deleteUser("user1"); //physically delete
 }
-catch(Exception $e)
+catch(\Throwable $e)
 {
 	echo $e->getMessage();
 }

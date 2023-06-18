@@ -1,9 +1,10 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
+namespace Rasher\Data\DataManagement\Type;
 
 abstract class DataType
 {
-    const DT_DATETIME = 1; //DEFAULT STRING CONVERSION WITH FORMAT
+	const DT_DATETIME = 1; //DEFAULT STRING CONVERSION WITH FORMAT
 	const DT_TIMESTAMP = 2;//DEFAULT STRING CONVERSION WITH FORMAT
 	const DT_DATETIME_ORIGINAL = 3; //DATETIME TYPE ORIGINAL FOR DATETIME CALCULATION (NOT REPRESENTATION)
 	const DT_TIMESTAMP_ORIGINAL = 4; //DATETIME TYPE ORIGINAL FOR DATETIME CALCULATION (NOT REPRESENTATION)
@@ -65,7 +66,7 @@ class FilterParam
 
 class ReferenceDescriptor
 {
-    public $sourceTableName = null;
+	public $sourceTableName = null;
 	public $targetTableName = null;	
 	public $sourceItemAttributes = null;
 	public $targetItemAttributes = null;	
@@ -123,7 +124,7 @@ class ItemAttribute
 	public static function with_Name_DataType($name, $dataType)
 	{
 		$returnValue = new self($name, $name, $dataType);
-        return $returnValue;
+		return $returnValue;
 	}
 
 	//constructor
@@ -131,7 +132,7 @@ class ItemAttribute
 	{
 		$returnValue = new self($name, $name, $dataType);
 		$returnValue->dataFormat = $dataFormat;
-        return $returnValue;
+		return $returnValue;
 	}
 	
 	//constructor
@@ -155,7 +156,7 @@ class ItemAttribute
 	{
 		$returnValue = new self($name, $caption, $dataType);
 		$returnValue->dataFormat = $dataFormat;	
-        return $returnValue;
+		return $returnValue;
 	}
 
 	public function setReferenceDescriptor($referenceDescriptor)
@@ -278,7 +279,7 @@ class ItemAttribute
 					$date = strtotime($value);
 					$returnValue = date($this->dataFormat, $date);
 				}
-			break;
+				break;
 			case DataType::DT_TIMESTAMP:
 				if($this->dataFormat !== null)
 				{
@@ -286,33 +287,32 @@ class ItemAttribute
 					date_timestamp_set($date, $value);
 					$returnValue = date_format($date, $this->dataFormat);
 				}
-			break;
+				break;
 			case DataType::DT_DATETIME_ORIGINAL: //Cannot use in mysql db data
 				$date = strtotime($value);
 				$returnValue = $date;
-			break;
+				break;
 			case DataType::DT_TIMESTAMP_ORIGINAL: //Cannot use in mysql db data
 				$date = date_create();
 				date_timestamp_set($date, $value);
 				$returnValue = $date;
-			break;				
+				break;				
 			case DataType::DT_FLOAT:
 				$returnValue = (float)$value;
-			break;
+				break;
 			case DataType::DT_DOUBLE:
 				$returnValue = (double)$value;
-			break;
+				break;
 			case DataType::DT_INT:
 				$returnValue = (int)$value;
-			break;		
+				break;		
 			case DataType::DT_BOOL:
 				$returnValue = (bool)$value;
-			break;				
+				break;				
 			default:
 				$returnValue = $value;
 		}
 		return $returnValue;
 	}
 }
-
 ?>

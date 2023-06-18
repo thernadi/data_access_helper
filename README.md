@@ -19,6 +19,7 @@ Currently, it can:
 
 //FURTHER DEVELOPMENT PHASE
 - Filtering searching items with more relations via BindingParam, FilterParam
+- Transaction handling
 - Caching
 - Historical data handling with DBHistoricalRepository
 - Datatable generation by the described attributes with foreign keys constraints.

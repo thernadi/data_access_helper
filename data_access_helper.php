@@ -5,13 +5,18 @@
 //- data_type_helper.php 
 //- common_static_helper.php
 
-//Current version: 2.21
+//Current version: 2.22
 //Database table rules: all table contains the fields belows in database.
 //Table level existed fields:
 //Id (int, required, primary key)
 //IsDeleted (datetime, default 0)
 
 //Extends class from DbRepository class for using
+
+namespace Rasher\Data\DataManagement;
+use Rasher\Data\DataManagement\Type\{DataType,LogicalOperator,Param,FilterParam,ReferenceDescriptor,ItemAttribute};
+use Rasher\Common\{Common};
+use Mysqli;
 
 include_once __DIR__."/data_type_helper.php";
 include_once __DIR__."/common_static_helper.php";
@@ -129,14 +134,14 @@ class DataAccessHelper
 			}
 			$this->close();
 		}
-		catch (Exception $e)
+		catch (\Throwable $e)
 		{
 			echo $e->getMessage();
 		}
 		return $returnValue;
 	}
 	
-    //$params: BindingParam array
+	//$params: BindingParam array
 	private function getStmtBindingParams($params) 
 	{
 		$bindingType = "";
@@ -198,7 +203,7 @@ class DataAccessHelper
 			$stmt->close();
 			$this->close();
 		}
-		catch (Exception $e)
+		catch (\Throwable $e)
 		{
 			echo $e->getMessage();
 		}
@@ -234,14 +239,14 @@ class DataAccessHelper
 			$stmt->close();
 			$this->close();
 		}
-		catch (Exception $e)
+		catch (\Throwable $e)
 		{
 			echo $e->getMessage();
 		}
 		return $returnValue;
 	}
 	
-    //Check wether an array contains a value (for the conventional query result)
+	//Check wether an array contains a value (for the conventional query result)
 	//$name: column name
 	//$value: search value
 	//$rows: array($row-array)
@@ -385,20 +390,20 @@ class DbRepository extends DataAccessHelper
 			$bindingType = "";		
 			switch ($value->dataType) 
 			{
-			  case DataType::DT_DATETIME:
-			  case DataType::DT_TIMESTAMP:
+			case DataType::DT_DATETIME:
+			case DataType::DT_TIMESTAMP:
 				$bindingType = "s";
 				break;
-			  case DataType::DT_FLOAT:
-			  case DataType::DT_DOUBLE:
+			case DataType::DT_FLOAT:
+			case DataType::DT_DOUBLE:
 				$bindingType = "d";
 				break;
-			  case DataType::DT_ITEM:	
-			  case DataType::DT_INT:
-			  case DataType::DT_BOOL:
+			case DataType::DT_ITEM:	
+			case DataType::DT_INT:
+			case DataType::DT_BOOL:
 				$bindingType = "i";
 				break;
-			  default:
+			default:
 				$bindingType = "s";
 			}
 			
@@ -622,14 +627,14 @@ class DbRepository extends DataAccessHelper
 	public function getMaxField($fieldName)
 	{
 		$query = "SELECT DISTINCT MAX(".$fieldName.") FROM ". $this->tbl . " WHERE IsDeleted = ?";
-	    $params[] = new BindingParam("IsDeleted", "i", 0);
+		$params[] = new BindingParam("IsDeleted", "i", 0);
 		return $this->executeScalar($query, $params);
 	}
 
 	public function getMinField($fieldName)
 	{
 		$query = "SELECT DISTINCT MIN(".$fieldName.") FROM ". $this->tbl . " WHERE IsDeleted = ?";
-	    $params[] = new BindingParam("IsDeleted", "i", 0);		
+		$params[] = new BindingParam("IsDeleted", "i", 0);		
 		return $this->executeScalar($query, $params);
 	}
 	
@@ -679,7 +684,7 @@ class DbRepository extends DataAccessHelper
 						}
 					}
 				}
-				Common::writeOutLetter("-", 50);
+				Common::writeOutLetter("-", 50, LINE_SEPARATOR);
 			}
 		}	
 		echo LINE_SEPARATOR;	
@@ -758,6 +763,5 @@ class DbRepository extends DataAccessHelper
 	}
 
 }
-
 
 ?>
