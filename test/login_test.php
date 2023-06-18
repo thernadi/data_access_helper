@@ -11,6 +11,105 @@ class LoginTest
 		$this->dbUserRepository = $dbUserRepository;
 	}
 
+	public function deleteBaseData()
+	{
+		$this->dbUserRepository->dbUserRoleRepository->deleteAll();
+		$this->dbUserRepository->dbUserSettingRepository->deleteAll();
+	}
+
+	public function createBaseData()
+	{
+		//UserRole
+		$filters = array();
+		$filters[] = new BindingParam("IsDeleted", "i", 0);
+		$filters[] = new BindingParam("Code", "s", "BASE_USER");
+		if (!$this->checkItemInDB($this->dbUserRepository->dbUserRoleRepository, $filters, $item))
+		{
+			$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
+			ItemAttribute::getItemAttribute($item, "Code")->value = "BASE_USER";
+			ItemAttribute::getItemAttribute($item, "Name")->value = "Base user";
+			$this->dbUserRepository->dbUserRoleRepository->save($item);
+		}
+
+		$filters = array();
+		$filters[] = new BindingParam("IsDeleted", "i", 0);
+		$filters[] = new BindingParam("Code", "s", "GUEST");
+		if (!$this->checkItemInDB($this->dbUserRepository->dbUserRoleRepository, $filters, $item))
+		{
+			$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
+			ItemAttribute::getItemAttribute($item, "Code")->value = "GUEST";
+			ItemAttribute::getItemAttribute($item, "Name")->value = "Guest";
+			$this->dbUserRepository->dbUserRoleRepository->save($item);
+		}
+
+		$filters = array();
+		$filters[] = new BindingParam("IsDeleted", "i", 0);
+		$filters[] = new BindingParam("Code", "s", "ADMIN");
+		if (!$this->checkItemInDB($this->dbUserRepository->dbUserRoleRepository, $filters, $item))
+		{
+			$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
+			ItemAttribute::getItemAttribute($item, "Code")->value = "ADMIN";
+			ItemAttribute::getItemAttribute($item, "Name")->value = "Admin";
+			$this->dbUserRepository->dbUserRoleRepository->save($item);
+		}
+
+		//UserSetting
+		$filters = array();
+		$filters[] = new BindingParam("IsDeleted", "i", 0);
+		$filters[] = new BindingParam("Name", "s", "ACTIVE");
+		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
+		{
+			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
+			ItemAttribute::getItemAttribute($item, "Name")->value = "ACTIVE";
+			ItemAttribute::getItemAttribute($item, "DefaultValue")->value = 0;
+			$this->dbUserRepository->dbUserSettingRepository->save($item);
+		}
+
+		$filters = array();
+		$filters[] = new BindingParam("IsDeleted", "i", 0);
+		$filters[] = new BindingParam("Name", "s", "LOGLEVEL");
+		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
+		{
+			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
+			ItemAttribute::getItemAttribute($item, "Name")->value = "LOGLEVEL";
+			ItemAttribute::getItemAttribute($item, "DefaultValue")->value = 1;
+			$this->dbUserRepository->dbUserSettingRepository->save($item);
+		}
+
+		$filters = array();
+		$filters[] = new BindingParam("IsDeleted", "i", 0);
+		$filters[] = new BindingParam("Name", "s", "ACCESS_READ");
+		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
+		{
+			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
+			ItemAttribute::getItemAttribute($item, "Name")->value = "ACCESS_READ";
+			ItemAttribute::getItemAttribute($item, "DefaultValue")->value = 0;
+			$this->dbUserRepository->dbUserSettingRepository->save($item);
+		}
+
+		$filters = array();
+		$filters[] = new BindingParam("IsDeleted", "i", 0);
+		$filters[] = new BindingParam("Name", "s", "ACCESS_WRITE");
+		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
+		{
+			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
+			ItemAttribute::getItemAttribute($item, "Name")->value = "ACCESS_WRITE";
+			ItemAttribute::getItemAttribute($item, "DefaultValue")->value = 0;
+			$this->dbUserRepository->dbUserSettingRepository->save($item);
+		}
+
+		$filters = array();
+		$filters[] = new BindingParam("IsDeleted", "i", 0);
+		$filters[] = new BindingParam("Name", "s", "ACCESS_DOWNLOAD");
+		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
+		{
+			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
+			ItemAttribute::getItemAttribute($item, "Name")->value = "ACCESS_DOWNLOAD";
+			ItemAttribute::getItemAttribute($item, "DefaultValue")->value = 0;
+			$this->dbUserRepository->dbUserSettingRepository->save($item);
+		}
+	}
+
     public function login($loginName, $password)
     {
 		$returnValue = false;
@@ -20,7 +119,7 @@ class LoginTest
 		$filters[] = new BindingParam("IsDeleted", "i", 0);
 		$filters[] = new BindingParam("LoginName", "s", $loginName);
 		$filters[] = new BindingParam("Password", "s", sha1($password));
-		if ($this->checkUserInDB($filters, $this->userLogin))
+		if ($this->checkItemInDB($this->dbUserRepository, $filters, $this->userLogin))
 		{
 			$this->userLogin = $this->userLogin[0];
 			$itemAttributeIsLogged = ItemAttribute::getItemAttribute($this->userLogin, "IsLogged");
@@ -88,21 +187,31 @@ class LoginTest
 			echo "User_UserRolesCollection:";
 			$userRolesCollectionAttribute = ItemAttribute::getItemAttribute($user[0], "UserRolesCollection");
 			$this->dbUserRepository->writeOutSimpleData($userRolesCollectionAttribute->value);
-			echo "User_UserRolesCollection UserRole names with settings and values:";
+			echo "User_UserRolesCollection UserRole codes with settings and values:";
 			echo LINE_SEPARATOR;
 			foreach($userRolesCollectionAttribute->value as $userRoleCollectionItem)
 			{
-				$userRoleAttributeNameAttribute = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserRole.Name");	
+				$userRoleAttributeNameAttribute = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserRole.Code");	
 				echo $userRoleAttributeNameAttribute->value;
+				echo LINE_SEPARATOR;
+				echo "User setting names:".LINE_SEPARATOR;
 				$userSettingAttributeNameAttribute = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserSettingsCollection.UserSetting.Name");	
 				foreach($userSettingAttributeNameAttribute as $value)
 				{
 					echo " -> ".$value->value;
-
-					$userSettingCollectionAttributeValueAttribute = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserSettingsCollection.Value");
-					echo " -> ".$userSettingCollectionAttributeValueAttribute[0]->value;
 					echo LINE_SEPARATOR;					
 				}
+
+				echo "UserSettings with names and values:".LINE_SEPARATOR;
+				$userSettingCollectionAttribute = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserSettingsCollection");
+				foreach($userSettingCollectionAttribute->value as $userSettingCollectionItem)
+				{	
+					$userSettingCollectionAttributeUserSettingNameAttribute = ItemAttribute::getItemAttribute($userSettingCollectionItem, "UserSetting.Name");
+					$userSettingCollectionAttributeValueAttribute = ItemAttribute::getItemAttribute($userSettingCollectionItem, "Value");
+					echo " -> ".$userSettingCollectionAttributeUserSettingNameAttribute->value." : ".$userSettingCollectionAttributeValueAttribute->value;
+					echo LINE_SEPARATOR;	
+				}
+				echo LINE_SEPARATOR;	
 			}
 
 			echo LINE_SEPARATOR;	
@@ -113,13 +222,44 @@ class LoginTest
 		}
 	}
 
+	private function getNewUserRoleCollectionItem($userRoleCode, $settingValuesParamArrayArray)
+	{
+		$userRoleCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionItemAttributes());
+		$filters = array();
+		$filters[] = new BindingParam("IsDeleted", "i", 0);
+		$filters[] = new BindingParam("Code", "s", $userRoleCode);		
+		$userRole = $this->dbUserRepository->dbUserRoleRepository->loadByFilter2($filters);
+		$itemAttributeUserRoleCollectionItemUserRole = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserRole");
+		$itemAttributeUserRoleCollectionItemUserRole->value = $userRole[0];
+
+		foreach($settingValuesParamArrayArray as $settingValuesParamArray)
+		{
+			$settingCode = Param::getParam("Code", $settingValuesParamArray)->value;
+			$settingValue = Param::getParam("Value", $settingValuesParamArray)->value;
+
+			$filters = array();
+			$filters[] = new BindingParam("IsDeleted", "i", 0);
+			$filters[] = new BindingParam("Name", "s", $settingCode);		
+			$userSetting = $this->dbUserRepository->dbUserSettingRepository->loadByFilter2($filters);
+	
+			$itemAttributeUserRoleCollectionItemUserSettingCollection = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserSettingsCollection");
+			$userRoleCollectionItemUserSettingCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionUserSettingsCollectionItemAttributes());
+			$userRoleCollectionItemUserSettingCollectionItemUserSetting = ItemAttribute::getItemAttribute($userRoleCollectionItemUserSettingCollectionItem, "UserSetting");
+			$userRoleCollectionItemUserSettingCollectionItemUserSetting->value = $userSetting[0];
+			$userRoleCollectionItemUserSettingCollectionItemValue = ItemAttribute::getItemAttribute($userRoleCollectionItemUserSettingCollectionItem, "Value");
+			$userRoleCollectionItemUserSettingCollectionItemValue->value = $settingValue;
+			$itemAttributeUserRoleCollectionItemUserSettingCollection->value[] = $userRoleCollectionItemUserSettingCollectionItem;
+		}
+		return $userRoleCollectionItem;
+	}
+
 	public function registerNewUser($loginName, $password)
 	{	
 		$newUser = null;
 		$filters = array();
 		$filters[] = new BindingParam("IsDeleted", "i", 0);
 		$filters[] = new BindingParam("LoginName", "s", $loginName);		
-		if ($this->checkUserInDB($filters, $newUser))
+		if ($this->checkItemInDB($this->dbUserRepository, $filters, $newUser))
 		{		
 			echo "User is already existed!".LINE_SEPARATOR;
 		}
@@ -141,57 +281,20 @@ class LoginTest
 			$itemAttributeDefaultUserRole = ItemAttribute::getItemAttribute($newUser, "DefaultUserRole");
 			$itemAttributeDefaultUserRole->value = $userRole[0];
 	
-
 			//Set user's UserRolesCollection
 			$itemAttributeUserRoleCollection = ItemAttribute::getItemAttribute($newUser, "UserRolesCollection");
 
 			//Adding Guest UserRole
-			$userRoleCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionItemAttributes());
-			$filters = array();
-			$filters[] = new BindingParam("IsDeleted", "i", 0);
-			$filters[] = new BindingParam("Code", "s", "GUEST");		
-			$userRole = $this->dbUserRepository->dbUserRoleRepository->loadByFilter2($filters);
-			$itemAttributeUserRoleCollectionItemUserRole = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserRole");
-			$itemAttributeUserRoleCollectionItemUserRole->value = $userRole[0];
-
-			$filters = array();
-			$filters[] = new BindingParam("IsDeleted", "i", 0);
-			$filters[] = new BindingParam("Name", "s", "ACTIVE");		
-			$userSetting = $this->dbUserRepository->dbUserSettingRepository->loadByFilter2($filters);
-
-			$itemAttributeUserRoleCollectionItemUserSettingCollection = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserSettingsCollection");
-			$userRoleCollectionItemUserSettingCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionUserSettingsCollectionItemAttributes());
-			$userRoleCollectionItemUserSettingCollectionItemUserSetting = ItemAttribute::getItemAttribute($userRoleCollectionItemUserSettingCollectionItem, "UserSetting");
-			$userRoleCollectionItemUserSettingCollectionItemUserSetting->value = $userSetting[0];
-			$userRoleCollectionItemUserSettingCollectionItemValue = ItemAttribute::getItemAttribute($userRoleCollectionItemUserSettingCollectionItem, "Value");
-			$userRoleCollectionItemUserSettingCollectionItemValue->value = 1; //1 - TRUE, 0 - FALSE
-			$itemAttributeUserRoleCollectionItemUserSettingCollection->value[] = $userRoleCollectionItemUserSettingCollectionItem;
-
-			$itemAttributeUserRoleCollection->value[] = $userRoleCollectionItem;
+			$settingValuesParamArrayArray = array();
+			$settingValuesParamArrayArray[] = array(new Param("Code", "ACTIVE"), new Param("Value", 1));
+			$settingValuesParamArrayArray[] = array(new Param("Code", "LOGLEVEL"), new Param("Value", 10));		
+			$itemAttributeUserRoleCollection->value[] = $this->getNewUserRoleCollectionItem("GUEST", $settingValuesParamArrayArray);
 
 			//Adding Base_User UserRole
-			$userRoleCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionItemAttributes());
-			$filters = array();
-			$filters[] = new BindingParam("IsDeleted", "i", 0);
-			$filters[] = new BindingParam("Code", "s", "BASE_USER");		
-			$userRole = $this->dbUserRepository->dbUserRoleRepository->loadByFilter2($filters);
-			$itemAttributeUserRoleCollectionItemUserRole = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserRole");
-			$itemAttributeUserRoleCollectionItemUserRole->value = $userRole[0];
-
-			$filters = array();
-			$filters[] = new BindingParam("IsDeleted", "i", 0);
-			$filters[] = new BindingParam("Name", "s", "ACTIVE");		
-			$userSetting = $this->dbUserRepository->dbUserSettingRepository->loadByFilter2($filters);
-
-			$itemAttributeUserRoleCollectionItemUserSettingCollection = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserSettingsCollection");
-			$userRoleCollectionItemUserSettingCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionUserSettingsCollectionItemAttributes());
-			$userRoleCollectionItemUserSettingCollectionItemUserSetting = ItemAttribute::getItemAttribute($userRoleCollectionItemUserSettingCollectionItem, "UserSetting");
-			$userRoleCollectionItemUserSettingCollectionItemUserSetting->value = $userSetting[0];
-			$userRoleCollectionItemUserSettingCollectionItemValue = ItemAttribute::getItemAttribute($userRoleCollectionItemUserSettingCollectionItem, "Value");
-			$userRoleCollectionItemUserSettingCollectionItemValue->value = 1; //1 - TRUE, 0 - FALSE
-			$itemAttributeUserRoleCollectionItemUserSettingCollection->value[] = $userRoleCollectionItemUserSettingCollectionItem;
-
-			$itemAttributeUserRoleCollection->value[] = $userRoleCollectionItem;
+			$settingValuesParamArrayArray = array();
+			$settingValuesParamArrayArray[] = array(new Param("Code", "ACTIVE"), new Param("Value", 1));
+			$settingValuesParamArrayArray[] = array(new Param("Code", "LOGLEVEL"), new Param("Value", 3));		
+			$itemAttributeUserRoleCollection->value[] = $this->getNewUserRoleCollectionItem("BASE_USER", $settingValuesParamArrayArray);
 
 			$this->dbUserRepository->save($newUser);
 			echo "User registered!".LINE_SEPARATOR;
@@ -203,7 +306,7 @@ class LoginTest
 		$currentUser = null;
 		$filters = array();
 		$filters[] = new BindingParam("LoginName", "s", $loginName);		
-		if (!$this->checkUserInDB($filters, $currentUser))
+		if (!$this->checkItemInDB($this->dbUserRepository, $filters, $currentUser))
 		{		
 			echo "User is not existed!".LINE_SEPARATOR;
 		}
@@ -217,17 +320,17 @@ class LoginTest
 		}
 	}
 
-	protected function checkUserInDB($filters, &$userLogin)
+	protected function checkItemInDB($dbRepository, $filters, &$item)
 	{
 		$returnValue = false;
-		$userLogin = $this->dbUserRepository->loadByFilter2($filters);
-		if(isset($userLogin) && count($userLogin) > 0)
+		$item = $dbRepository->loadByFilter2($filters);
+		if(isset($item) && count($item) > 0)
 		{
 			$returnValue = true;
 		}
 		else
 		{
-			$userLogin = null;
+			$item = null;
 		}		
 		return $returnValue;	
 	}
@@ -235,6 +338,8 @@ class LoginTest
 
 try
 {
+	//TEST
+	
 	$loginTest = new LoginTest($dbUserRepository);
 	//Comment out if you want to modify this class for several times!
 	//unset($_SESSION["LoginTest"]);
@@ -247,6 +352,9 @@ try
 	{
 		$loginTest = json_decode($loginTest); 
 	}
+
+	$loginTest->deleteBaseData(); //UserRole + UserSetting deleting
+	$loginTest->createBaseData(); //UserRole + UserSetting creating
 
 	$loginTest->registerNewUser("user1", "123");
 	$loginTest->login("user1", "123");

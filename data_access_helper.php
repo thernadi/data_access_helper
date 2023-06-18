@@ -5,7 +5,7 @@
 //- data_type_helper.php 
 //- common_static_helper.php
 
-//Current version: 2.17
+//Current version: 2.21
 //Database table rules: all table contains the fields belows in database.
 //Table level existed fields:
 //Id (int, required, primary key)
@@ -280,27 +280,20 @@ class DbRepository extends DataAccessHelper
 	public function getNewItemInstance($itemAttributes = null)
 	{
 		$returnValue = null;
-		try
+		if ($itemAttributes === null) 
+		{			
+			$itemAttributes	= $this->itemAttributes;
+		}
+
+		$returnValue = ItemAttribute::getSimpleCopiedItemAttributeArray($itemAttributes);
+
+		foreach($returnValue as $key => $val) 
 		{
-			if ($itemAttributes === null) 
-			{			
-				$itemAttributes	= $this->itemAttributes;
-			}
-
-			$returnValue = ItemAttribute::getSimpleCopiedItemAttributeArray($itemAttributes);
-
-			foreach($returnValue as $key => $val) 
+			if ($val->value === null && $val->defaultValue !== null)
 			{
-				if ($val->value === null && $val->defaultValue !== null)
-				{
-					$val->value = $val->defaultValue;
-				}
-			}		
-		}
-		catch (Exception $e)
-		{
-			echo $e->getMessage();
-		}
+				$val->value = $val->defaultValue;
+			}
+		}		
 		return $returnValue;		
 	}
 
@@ -309,45 +302,38 @@ class DbRepository extends DataAccessHelper
 	public function convertToItemAttributeArrayArray($rowArray, $itemAttributes = null)
 	{
 		$returnValue = array(); 
-		try
-		{
-			if ($itemAttributes === null) 
-			{			
-				$itemAttributes	= $this->itemAttributes;
-			}
+		if ($itemAttributes === null) 
+		{			
+			$itemAttributes	= $this->itemAttributes;
+		}
 
-			foreach ($rowArray as $row)
+		foreach ($rowArray as $row)
+		{
+			$itemAttributesCopy = $this->getNewItemInstance($itemAttributes);
+			
+			foreach($row as $key => $val) 
 			{
-				$itemAttributesCopy = $this->getNewItemInstance($itemAttributes);
-				
-				foreach($row as $key => $val) 
-				{
-					$itemAttribute = ItemAttribute::getItemAttribute($itemAttributesCopy, $key);				
-					if ($itemAttribute !== null)
-					{ 
-						if ($itemAttribute->dataType !== DataType::DT_LIST 
-						&& $itemAttribute->dataType !== DataType::DT_ITEM)
+				$itemAttribute = ItemAttribute::getItemAttribute($itemAttributesCopy, $key);				
+				if ($itemAttribute !== null)
+				{ 
+					if ($itemAttribute->dataType !== DataType::DT_LIST 
+					&& $itemAttribute->dataType !== DataType::DT_ITEM)
+					{
+						$itemAttribute->value = $val;
+					}
+					else if ($itemAttribute->referenceDescriptor !== null 
+					&& $itemAttribute->dataType === DataType::DT_ITEM)
+					{
+						$itemAttribute->value = $this->getNewItemInstance($itemAttribute->referenceDescriptor->targetItemAttributes);
+						if ($itemAttribute->value !== null)
 						{
-							$itemAttribute->value = $val;
-						}
-						else if ($itemAttribute->referenceDescriptor !== null 
-						&& $itemAttribute->dataType === DataType::DT_ITEM)
-						{
-							$itemAttribute->value = $this->getNewItemInstance($itemAttribute->referenceDescriptor->targetItemAttributes);
-							if ($itemAttribute->value !== null)
-							{
-								$itemAttributeId = ItemAttribute::getItemAttribute($itemAttribute->value, $itemAttribute->referenceDescriptor->targetMappingAttributeName);
-								$itemAttributeId->value = $val;
-							}
+							$itemAttributeId = ItemAttribute::getItemAttribute($itemAttribute->value, $itemAttribute->referenceDescriptor->targetMappingAttributeName);
+							$itemAttributeId->value = $val;
 						}
 					}
 				}
-				$returnValue[] = $itemAttributesCopy;	
 			}
-		}
-		catch (Exception $e)
-		{
-			echo $e->getMessage();
+			$returnValue[] = $itemAttributesCopy;	
 		}
 		return $returnValue;
 	}
@@ -356,36 +342,29 @@ class DbRepository extends DataAccessHelper
 	public function convertToRowArray($itemAttributeArrayArray)
 	{
 		$returnValue = array(); 
-		try
+		foreach ($itemAttributeArrayArray as $itemAttributeArray)
 		{
-			foreach ($itemAttributeArrayArray as $itemAttributeArray)
+			$row = array();						
+			foreach($itemAttributeArray as $key => $val) 
 			{
-				$row = array();						
-				foreach($itemAttributeArray as $key => $val) 
+				if ($val->dataType !== DataType::DT_LIST 
+				&& $val->dataType !== DataType::DT_ITEM)
 				{
-					if ($val->dataType !== DataType::DT_LIST 
-					&& $val->dataType !== DataType::DT_ITEM)
-					{
-						$row[$val->name] = $val->value;
-					}
-					else if ($val->referenceDescriptor !== null 
-					&& $val->dataType === DataType::DT_ITEM)
-					{
-						$itemAttributeId = ItemAttribute::getItemAttribute($val->value, $val->referenceDescriptor->targetMappingAttributeName);
-						$row[$val->name] = $itemAttributeId->value;
-					}
-					else if ($val->referenceDescriptor !== null 
-					&& $val->dataType === DataType::DT_LIST)
-					{
-						$row[$val->name] = $this->convertToRowArray($val->value);
-					}			
+					$row[$val->name] = $val->value;
 				}
-				$returnValue[] = $row;	
+				else if ($val->referenceDescriptor !== null 
+				&& $val->dataType === DataType::DT_ITEM)
+				{
+					$itemAttributeId = ItemAttribute::getItemAttribute($val->value, $val->referenceDescriptor->targetMappingAttributeName);
+					$row[$val->name] = $itemAttributeId->value;
+				}
+				else if ($val->referenceDescriptor !== null 
+				&& $val->dataType === DataType::DT_LIST)
+				{
+					$row[$val->name] = $this->convertToRowArray($val->value);
+				}			
 			}
-		}
-		catch (Exception $e)
-		{
-			echo $e->getMessage();
+			$returnValue[] = $row;	
 		}
 		return $returnValue;
 	}
@@ -454,49 +433,42 @@ class DbRepository extends DataAccessHelper
 	//$orderDirection: asc/desc/null
 	{
 		$returnValue = array();
-		try
+		$query = "SELECT ";
+		if  ($fields != null && count($fields) > 0)
 		{
-			$query = "SELECT ";
-			if  ($fields != null && count($fields) > 0)
-			{
-				foreach ($fields as $field)
-					$query .= $field.", ";
-				$query = substr($query, 0, strlen($query) - 2);
-			}
-			else
-				$query .="*";
-
-			$query .=" FROM " . $this->tbl;
-			if ($filters != null && count($filters) > 0)
-			{
-				$query .=" WHERE ";
-				foreach ($filters as $filter)
-				{
-					$query .= $filter->name." LIKE ? AND ";
-				}
-				$query = substr($query, 0, strlen($query) - 4);
-			}
-			else
-				$filters = array();
-			if  ($orderFields != null && count($orderFields) > 0)
-			{
-				$query .= " ORDER BY ";
-				foreach ($orderFields as $orderField)
-					$query .= $orderField.", ";
-				$query = substr($query, 0, strlen($query) - 2);
-				
-				$orderDirection = strtolower($orderDirection);
-				if ($orderDirection != null && ($orderDirection === "asc" || $orderDirection === "desc"))
-					$query .=" ".$orderDirection;
-				else
-					$query .=" asc";
-			}
-			$returnValue = $this->execute($query, $filters);
+			foreach ($fields as $field)
+				$query .= $field.", ";
+			$query = substr($query, 0, strlen($query) - 2);
 		}
-		catch (Exception $e)
+		else
+			$query .="*";
+
+		$query .=" FROM " . $this->tbl;
+		if ($filters != null && count($filters) > 0)
 		{
-			echo $e->getMessage();
-		}	
+			$query .=" WHERE ";
+			foreach ($filters as $filter)
+			{
+				$query .= $filter->name." LIKE ? AND ";
+			}
+			$query = substr($query, 0, strlen($query) - 4);
+		}
+		else
+			$filters = array();
+		if  ($orderFields != null && count($orderFields) > 0)
+		{
+			$query .= " ORDER BY ";
+			foreach ($orderFields as $orderField)
+				$query .= $orderField.", ";
+			$query = substr($query, 0, strlen($query) - 2);
+			
+			$orderDirection = strtolower($orderDirection);
+			if ($orderDirection != null && ($orderDirection === "asc" || $orderDirection === "desc"))
+				$query .=" ".$orderDirection;
+			else
+				$query .=" asc";
+		}
+		$returnValue = $this->execute($query, $filters);
 		return $this->convertToItemAttributeArrayArray($returnValue);
 	}
 
@@ -511,107 +483,92 @@ class DbRepository extends DataAccessHelper
 	public function loadById($id, $tbl = null, $idAttributeName = null,  $itemAttributes = null)
 	{
 		$returnValue = null;
-		try
+		if ($tbl === null)
 		{
-			if ($tbl === null)
-			{
-				$tbl = $this->tbl;
-			}
+			$tbl = $this->tbl;
+		}
 
-			if ($idAttributeName === null)
-			{
-				$idAttributeName = "Id";
-			}
+		if ($idAttributeName === null)
+		{
+			$idAttributeName = "Id";
+		}
 
-			$query = "SELECT * FROM " . $tbl . " WHERE ".$idAttributeName." = ? AND IsDeleted = ?";
-			$params = array();
-			$params[] = new BindingParam($idAttributeName, "i", $id);
-			$params[] = new BindingParam("IsDeleted", "i", 0);
-			$returnValue = $this->execute($query, $params);
-			$returnValue = $this->convertToItemAttributeArrayArray($returnValue, $itemAttributes);
+		$query = "SELECT * FROM " . $tbl . " WHERE ".$idAttributeName." = ? AND IsDeleted = ?";
+		$params = array();
+		$params[] = new BindingParam($idAttributeName, "i", $id);
+		$params[] = new BindingParam("IsDeleted", "i", 0);
+		$returnValue = $this->execute($query, $params);
+		$returnValue = $this->convertToItemAttributeArrayArray($returnValue, $itemAttributes);
 
-			foreach($returnValue as $outterKey => $outterValue)
+		foreach($returnValue as $outterKey => $outterValue)
+		{
+			foreach ($outterValue as $key => $value)
 			{
-				foreach ($outterValue as $key => $value)
+				if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_ITEM)
 				{
-					if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_ITEM)
-					{
-						$itemAttributeId = ItemAttribute::getItemAttribute($value->value, $value->referenceDescriptor->targetMappingAttributeName);
-						$value->value = $this->loadById($itemAttributeId->value, $value->referenceDescriptor->targetTableName, $value->referenceDescriptor->targetMappingAttributeName, $value->value)[0];
-					}
-					else if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_LIST)
-					{
-						$itemAttributeId = ItemAttribute::getItemAttribute($outterValue, $value->referenceDescriptor->sourceMappingAttributeName);
-						$value->value = $this->loadById($itemAttributeId->value, $value->referenceDescriptor->targetTableName, $value->referenceDescriptor->targetMappingAttributeName, $value->referenceDescriptor->targetItemAttributes);
-					}
+					$itemAttributeId = ItemAttribute::getItemAttribute($value->value, $value->referenceDescriptor->targetMappingAttributeName);
+					$value->value = $this->loadById($itemAttributeId->value, $value->referenceDescriptor->targetTableName, $value->referenceDescriptor->targetMappingAttributeName, $value->value)[0];
+				}
+				else if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_LIST)
+				{
+					$itemAttributeId = ItemAttribute::getItemAttribute($outterValue, $value->referenceDescriptor->sourceMappingAttributeName);
+					$value->value = $this->loadById($itemAttributeId->value, $value->referenceDescriptor->targetTableName, $value->referenceDescriptor->targetMappingAttributeName, $value->referenceDescriptor->targetItemAttributes);
 				}
 			}
 		}
-		catch (Exception $e)
-		{
-			echo $e->getMessage();
-		}	
-
 		return $returnValue;
 	}
 
 	//$item: ItemAttribute array	
 	public function save($item, $tbl = null) 
 	{
-		try
+		$params = $this->getParamsByItem($item);		
+
+		if ($tbl === null)
 		{
-			$params = $this->getParamsByItem($item);		
-
-			if ($tbl === null)
-			{
-				$tbl = $this->tbl;
-			}
-
-			$itemAttributeId = ItemAttribute::getItemAttribute($item, "Id");
-		
-			$q_fnames = "";
-			$q_fparams = "";
-			if ($itemAttributeId->value > 0) //UPDATE
-			{
-				foreach ($params as $param)
-				{
-					$q_fnames .= $param->name." = ?, ";
-				}
-				$q_fnames = substr($q_fnames, 0, strlen($q_fnames) - 2);
-				$params[] = new BindingParam("Id", "i", $itemAttributeId->value);
-				$query = "UPDATE ". $tbl ." SET ".$q_fnames." WHERE Id = ?";
-				$this->execute($query, $params);
-			}
-			else //INSERT
-			{
-				foreach ($params as $param)
-				{
-					$q_fnames .= $param->name.", ";
-					$q_fparams .="?, ";
-				}
-				$q_fnames = substr($q_fnames, 0, strlen($q_fnames) - 2);
-				$q_fparams = substr($q_fparams, 0, strlen($q_fparams) - 2);
-				$query = "INSERT INTO ". $tbl ." (".$q_fnames.") VALUES (".$q_fparams.")";
-				$this->execute($query, $params, $item);
-			}
-
-			foreach($item as $key => $value)
-			{
-				if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_LIST)
-				{
-					foreach($value->value as $collectionItemKey => $collectionItemValue)
-					{
-						$itemCollectionReferenceAttribute = ItemAttribute::getItemAttribute($collectionItemValue, $value->referenceDescriptor->targetMappingAttributeName);
-						$itemCollectionReferenceAttribute->value = $itemAttributeId->value;
-						$this->save($collectionItemValue, $value->referenceDescriptor->targetTableName);
-					}
-				}	
-			}
+			$tbl = $this->tbl;
 		}
-		catch (Exception $e)
+
+		$itemAttributeId = ItemAttribute::getItemAttribute($item, "Id");
+	
+		$q_fnames = "";
+		$q_fparams = "";
+		if ($itemAttributeId->value > 0) //UPDATE
 		{
-			echo $e->getMessage();
-		}		
+			foreach ($params as $param)
+			{
+				$q_fnames .= $param->name." = ?, ";
+			}
+			$q_fnames = substr($q_fnames, 0, strlen($q_fnames) - 2);
+			$params[] = new BindingParam("Id", "i", $itemAttributeId->value);
+			$query = "UPDATE ". $tbl ." SET ".$q_fnames." WHERE Id = ?";
+			$this->execute($query, $params);
+		}
+		else //INSERT
+		{
+			foreach ($params as $param)
+			{
+				$q_fnames .= $param->name.", ";
+				$q_fparams .="?, ";
+			}
+			$q_fnames = substr($q_fnames, 0, strlen($q_fnames) - 2);
+			$q_fparams = substr($q_fparams, 0, strlen($q_fparams) - 2);
+			$query = "INSERT INTO ". $tbl ." (".$q_fnames.") VALUES (".$q_fparams.")";
+			$this->execute($query, $params, $item);
+		}
+
+		foreach($item as $key => $value)
+		{
+			if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_LIST)
+			{
+				foreach($value->value as $collectionItemKey => $collectionItemValue)
+				{
+					$itemCollectionReferenceAttribute = ItemAttribute::getItemAttribute($collectionItemValue, $value->referenceDescriptor->targetMappingAttributeName);
+					$itemCollectionReferenceAttribute->value = $itemAttributeId->value;
+					$this->save($collectionItemValue, $value->referenceDescriptor->targetTableName);
+				}
+			}	
+		}	
 	}
 	
 	public function deleteAll()
@@ -623,50 +580,43 @@ class DbRepository extends DataAccessHelper
 	
 	public function delete($item, $tbl = null, &$queryBuffer = null)
 	{
-		try
+		$first = false;
+		if ($tbl === null)
 		{
-			$first = false;
-			if ($tbl === null)
+			$tbl = $this->tbl;
+			$first = true;
+		}
+
+		if ($queryBuffer === null)
+		{
+			$queryBuffer = array();
+		}
+
+		$itemAttributeId = ItemAttribute::getItemAttribute($item, "Id");
+
+		$query = "DELETE FROM " . $tbl." WHERE Id = ?";
+		$params = array();
+		$params[] = new BindingParam("Id", "i", $itemAttributeId->value);	
+		$queryBuffer[] = array("query" => $query, "params" => $params);		
+
+		foreach($item as $key => $value)
+		{
+			if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_LIST)
 			{
-				$tbl = $this->tbl;
-				$first = true;
-			}
-
-			if ($queryBuffer === null)
-			{
-				$queryBuffer = array();
-			}
-
-			$itemAttributeId = ItemAttribute::getItemAttribute($item, "Id");
-
-			$query = "DELETE FROM " . $tbl." WHERE Id = ?";
-			$params = array();
-			$params[] = new BindingParam("Id", "i", $itemAttributeId->value);	
-			$queryBuffer[] = array("query" => $query, "params" => $params);		
-
-			foreach($item as $key => $value)
-			{
-				if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_LIST)
+				foreach($value->value as $collectionItemKey => $collectionItemValue)
 				{
-					foreach($value->value as $collectionItemKey => $collectionItemValue)
-					{
-						$this->delete($collectionItemValue, $value->referenceDescriptor->targetTableName, $queryBuffer);
-					}
-				}	
-			}
-
-			if ($first)
-			{
-				for($i = count($queryBuffer) - 1; $i >= 0; $i--)
-				{
-					$this->execute($queryBuffer[$i]["query"], $queryBuffer[$i]["params"]);
+					$this->delete($collectionItemValue, $value->referenceDescriptor->targetTableName, $queryBuffer);
 				}
+			}	
+		}
+
+		if ($first)
+		{
+			for($i = count($queryBuffer) - 1; $i >= 0; $i--)
+			{
+				$this->execute($queryBuffer[$i]["query"], $queryBuffer[$i]["params"]);
 			}
 		}
-		catch (Exception $e)
-		{
-			echo $e->getMessage();
-		}	
 	}
 
 	public function getMaxField($fieldName)
@@ -690,63 +640,49 @@ class DbRepository extends DataAccessHelper
 	{
 		$outputItem = null;
 		$returnValue = false;
-		try
-		{
-			foreach ($items as $item)
-			{			
-				$itemAttribute = ItemAttribute::getItemAttribute($item, $name);
-				if ($itemAttribute !== null)
-				{				
-					if ($value === $itemAttribute->value)
-					{
-						$returnValue = true;
-						$outputItem = $item;
-						break;
-					}
+		foreach ($items as $item)
+		{			
+			$itemAttribute = ItemAttribute::getItemAttribute($item, $name);
+			if ($itemAttribute !== null)
+			{				
+				if ($value === $itemAttribute->value)
+				{
+					$returnValue = true;
+					$outputItem = $item;
+					break;
 				}
 			}
 		}
-		catch (Exception $e)
-		{
-			echo $e->getMessage();
-		}			
 		return $returnValue;
 	}
 
 	public function writeOutSimpleData($items) 
-	{	
-		try
-		{				
-			echo LINE_SEPARATOR.LINE_SEPARATOR;
-			if (isset($items) && count($items) > 0)
+	{				
+		echo LINE_SEPARATOR.LINE_SEPARATOR;
+		if (isset($items) && count($items) > 0)
+		{
+			foreach($items as $item)
 			{
-				foreach($items as $item)
+				foreach($item as $itemAttribute)
 				{
-					foreach($item as $itemAttribute)
+					if ($itemAttribute->isVisible)
 					{
-						if ($itemAttribute->isVisible)
+						if ($itemAttribute->dataType !== DataType::DT_LIST 
+							&& $itemAttribute->dataType !== DataType::DT_ITEM)
 						{
-							if ($itemAttribute->dataType !== DataType::DT_LIST 
-								&& $itemAttribute->dataType !== DataType::DT_ITEM)
-							{
-								echo $itemAttribute->name." : ".$itemAttribute->convertedValue($itemAttribute->value).LINE_SEPARATOR;
-							}
-							else if ($itemAttribute->dataType === DataType::DT_ITEM)
-							{
-								$itemAttributeId = ItemAttribute::getItemAttribute($itemAttribute->value, "Id");
-								echo $itemAttribute->name." : ".$itemAttribute->convertedValue($itemAttributeId->value).LINE_SEPARATOR;
-							}
+							echo $itemAttribute->name." : ".$itemAttribute->convertedValue($itemAttribute->value).LINE_SEPARATOR;
+						}
+						else if ($itemAttribute->dataType === DataType::DT_ITEM)
+						{
+							$itemAttributeId = ItemAttribute::getItemAttribute($itemAttribute->value, "Id");
+							echo $itemAttribute->name." : ".$itemAttribute->convertedValue($itemAttributeId->value).LINE_SEPARATOR;
 						}
 					}
-					Common::writeOutLetter("-", 50);
 				}
-			}	
-			echo LINE_SEPARATOR;	
-		}
-		catch (Exception $e)
-		{
-			echo $e->getMessage();
+				Common::writeOutLetter("-", 50);
+			}
 		}	
+		echo LINE_SEPARATOR;	
 	}
 
 	//$items : attributeItemArray array
@@ -755,77 +691,69 @@ class DbRepository extends DataAccessHelper
 	public function find($items, $filterParam, $firstMatch = false) 
 	{
 		$returnValue = array();
-
-		try
+		$matchByOneParameter = false;
+		if (count($filterParam->paramArray) === 1)
 		{
-			$matchByOneParameter = false;
-			if (count($filterParam->paramArray) === 1)
-			{
-				$matchByOneParameter = true;
-			}
-	
-			if ($filterParam->logicalOperator === null && count($filterParam->paramArray) > 1)
-			{
-				$filterParam->logicalOperator = LogicalOperator::LO_AND;
-			}
+			$matchByOneParameter = true;
+		}
 
-			foreach($items as $item)
+		if ($filterParam->logicalOperator === null && count($filterParam->paramArray) > 1)
+		{
+			$filterParam->logicalOperator = LogicalOperator::LO_AND;
+		}
+
+		foreach($items as $item)
+		{
+			$match = 0;
+			foreach($filterParam->paramArray as $param)
+			{			   
+			$itemAttribute = ItemAttribute::getItemAttribute($item, $param->name);
+			
+			if ($itemAttribute !== null)
 			{
-				$match = 0;
-				foreach($filterParam->paramArray as $param)
-				{			   
-				$itemAttribute = ItemAttribute::getItemAttribute($item, $param->name);
-				
-				if ($itemAttribute !== null)
+				if ($itemAttribute->value === $param->value)
 				{
-					if ($itemAttribute->value === $param->value)
-					{
-						$match++;				   
-					}			   
-				}
-				
-				if ($matchByOneParameter)
-				{
-					break;
+					$match++;				   
 				}			   
-				}
-				
-				if (!$matchByOneParameter)
+			}
+			
+			if ($matchByOneParameter)
+			{
+				break;
+			}			   
+			}
+			
+			if (!$matchByOneParameter)
+			{
+				if (($filterParam->logicalOperator === LogicalOperator::LO_OR && $match > 0) || $filterParam->logicalOperator === LogicalOperator::LO_AND && $match === count($filterParam->paramArray))
 				{
-					if (($filterParam->logicalOperator === LogicalOperator::LO_OR && $match > 0) || $filterParam->logicalOperator === LogicalOperator::LO_AND && $match === count($filterParam->paramArray))
+					if (!$firstMatch)
 					{
-						if (!$firstMatch)
-						{
-							$returnValue[] = $item;			
-						}	
-						else
-						{
-							$returnValue = $item;
-							break;				
-						}					
-					}
+						$returnValue[] = $item;			
+					}	
+					else
+					{
+						$returnValue = $item;
+						break;				
+					}					
 				}
-				else 
+			}
+			else 
+			{
+				if ($match > 0)
 				{
-					if ($match > 0)
+					if (!$firstMatch)
 					{
-						if (!$firstMatch)
-						{
-							$returnValue[] = $item;			
-						}	
-						else
-						{
-							$returnValue = $item;
-							break;				
-						}		
-					}
+						$returnValue[] = $item;			
+					}	
+					else
+					{
+						$returnValue = $item;
+						break;				
+					}		
 				}
-			}	
-		}
-		catch (Exception $e)
-		{
-			echo $e->getMessage();
-		}
+			}
+		}	
 		return $returnValue;
 	}
 

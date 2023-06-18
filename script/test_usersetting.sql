@@ -30,7 +30,7 @@ CREATE TABLE `usersetting` (
   `DefaultValue` varchar(100) DEFAULT NULL,
   `IsDeleted` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -39,7 +39,6 @@ CREATE TABLE `usersetting` (
 
 LOCK TABLES `usersetting` WRITE;
 /*!40000 ALTER TABLE `usersetting` DISABLE KEYS */;
-INSERT INTO `usersetting` VALUES (1,'ACTIVE','0',0),(2,'LOGLEVEL','0',0),(3,'ACCESS_READ','0',0),(4,'ACCES_WRITE','0',0),(5,'ACCESS_DOWNLOAD','0',0);
 /*!40000 ALTER TABLE `usersetting` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -52,4 +51,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-06-08 17:34:52
+-- Dump completed on 2023-06-18  8:54:13

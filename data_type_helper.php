@@ -37,21 +37,14 @@ class Param
 	public static function getParam($name, $paramArray)
 	{
 		$returnValue = null;
-		try
-		{	
-			foreach($paramArray as $param)
-			{
-				if ($param->name === $name)
-				{
-					$returnValue = $param;
-					break;
-				}		
-			}		
-		}
-		catch (Exception $e)
+		foreach($paramArray as $param)
 		{
-			echo $e->getMessage();
-		}
+			if ($param->name === $name)
+			{
+				$returnValue = $param;
+				break;
+			}		
+		}		
 		return $returnValue;
 	}
 }
@@ -179,96 +172,81 @@ class ItemAttribute
 	public static function getSimpleCopiedItemAttributeArray($array)
 	{
 		$returnValue = array();
-		try
+		foreach($array as $val) 
 		{
-			foreach($array as $val) 
+			if(is_array($val))
 			{
-				if(is_array($val))
-				{
-					$returnValue[] = ItemAttribute::getSimpleCopiedItemAttributeArray($val);	
-				}
-				else if(is_object($val))
-				{	
-					$item = new ItemAttribute($val->name, $val->caption, $val->dataType, $val->dataFormat, $val->required, $val->readonly, $val->isVisible, $val->defaultValue, $val->defaultCaption);				
-					$item->value = $val->value;
-					$item->orderByIndex = $val->orderByIndex;
+				$returnValue[] = ItemAttribute::getSimpleCopiedItemAttributeArray($val);	
+			}
+			else if(is_object($val))
+			{	
+				$item = new ItemAttribute($val->name, $val->caption, $val->dataType, $val->dataFormat, $val->required, $val->readonly, $val->isVisible, $val->defaultValue, $val->defaultCaption);				
+				$item->value = $val->value;
+				$item->orderByIndex = $val->orderByIndex;
 
-					if ($val->dataType === DataType::DT_LIST || $val->dataType === DataType::DT_ITEM)
-					{
-						$item->setReferenceDescriptor($val->referenceDescriptor);
-					}
-					$returnValue[] = $item;
+				if ($val->dataType === DataType::DT_LIST || $val->dataType === DataType::DT_ITEM)
+				{
+					$item->setReferenceDescriptor($val->referenceDescriptor);
 				}
+				$returnValue[] = $item;
 			}
 		}
-		catch (Exception $e)
-		{
-			echo $e->getMessage();
-		}	
 		return $returnValue;		
 	}
 		
 	//$itemAttributes: ItemAttribute array
 	public static function getItemAttribute($itemAttributes, $attributeName) 
 	{	
-		$returnValue = null;	
-		try
-		{			
-			if(str_contains($attributeName, "."))
+		$returnValue = null;			
+		if(str_contains($attributeName, "."))
+		{
+			$attributeNameExploded = explode(".", $attributeName);				
+			$itemAttributes = ItemAttribute::getItemAttribute($itemAttributes, $attributeNameExploded[0]);
+
+			$attributeName = "";
+			$first = true;
+			foreach($attributeNameExploded as $val)
 			{
-				$attributeNameExploded = explode(".", $attributeName);				
-				$itemAttributes = ItemAttribute::getItemAttribute($itemAttributes, $attributeNameExploded[0]);
-
-				$attributeName = "";
-				$first = true;
-				foreach($attributeNameExploded as $val)
+				if ($first)
 				{
-					if ($first)
-					{
-						$first = false;
-						continue;
-					}
-
-					$attributeName .= $val.".";
+					$first = false;
+					continue;
 				}
-				$attributeName = substr($attributeName, 0, strlen($attributeName) - 1);
 
-				$itemAttributes = $itemAttributes->value;
-				if (count($itemAttributes) > 0 
-				&& is_array($itemAttributes[0]))
+				$attributeName .= $val.".";
+			}
+			$attributeName = substr($attributeName, 0, strlen($attributeName) - 1);
+
+			$itemAttributes = $itemAttributes->value;
+			if (count($itemAttributes) > 0 
+			&& is_array($itemAttributes[0]))
+			{	
+				$returnValue = array();
+				foreach($itemAttributes as $val)
 				{	
-					$returnValue = array();
-					foreach($itemAttributes as $val)
-					{	
-						$returnValue[] = ItemAttribute::getItemAttribute($val, $attributeName);
-					}
-				}
-				else
-				{
-					$returnValue = ItemAttribute::getItemAttribute($itemAttributes, $attributeName);
+					$returnValue[] = ItemAttribute::getItemAttribute($val, $attributeName);
 				}
 			}
 			else
 			{
-				if (count($itemAttributes) > 0 
-				&& is_object($itemAttributes[0]))
-				{
-					foreach($itemAttributes as $key => $val) 
-					{		
-						if($val->name === $attributeName)
-						{
-							$returnValue = $val;
-							break;
-						}			
-					}
-				}
-			}		
+				$returnValue = ItemAttribute::getItemAttribute($itemAttributes, $attributeName);
+			}
 		}
-		catch (Exception $e)
+		else
 		{
-			echo $e->getMessage();
-		}
-
+			if (count($itemAttributes) > 0 
+			&& is_object($itemAttributes[0]))
+			{
+				foreach($itemAttributes as $key => $val) 
+				{		
+					if($val->name === $attributeName)
+					{
+						$returnValue = $val;
+						break;
+					}			
+				}
+			}
+		}		
 		$returnValue = ItemAttribute::eliminateOutterArray($returnValue);
 		return $returnValue;		
 	}
@@ -292,50 +270,46 @@ class ItemAttribute
 	public function convertedValue($value)
 	{
 		$returnValue = $value;
-		try
+		switch ($this->dataType)
 		{
-			if($this->dataFormat !== null)
-			{
-				switch ($this->dataType)
+			case DataType::DT_DATETIME:
+				if($this->dataFormat !== null)
 				{
-					case DataType::DT_DATETIME:
-						$date = strtotime($value);
-						$returnValue = date($this->dataFormat, $date);
-					break;
-					case DataType::DT_TIMESTAMP:
-						$date = date_create();
-						date_timestamp_set($date, $value);
-						$returnValue = date_format($date, $this->dataFormat);
-					break;
-					case DataType::DT_DATETIME_ORIGINAL: //Cannot use in mysql db data
-						$date = strtotime($value);
-						$returnValue = $date;
-					break;
-					case DataType::DT_TIMESTAMP_ORIGINAL: //Cannot use in mysql db data
-						$date = date_create();
-						date_timestamp_set($date, $value);
-						$returnValue = $date;
-					break;				
-					case DataType::DT_FLOAT:
-						$returnValue = (float)$value;
-					break;
-					case DataType::DT_DOUBLE:
-						$returnValue = (double)$value;
-					break;
-					case DataType::DT_INT:
-						$returnValue = (int)$value;
-					break;		
-					case DataType::DT_BOOL:
-						$returnValue = (bool)$value;
-					break;				
-					default:
-						$returnValue = $value;
+					$date = strtotime($value);
+					$returnValue = date($this->dataFormat, $date);
 				}
-			}		
-		}
-		catch (Exception $e)
-		{
-			echo $e->getMessage();
+			break;
+			case DataType::DT_TIMESTAMP:
+				if($this->dataFormat !== null)
+				{
+					$date = date_create();
+					date_timestamp_set($date, $value);
+					$returnValue = date_format($date, $this->dataFormat);
+				}
+			break;
+			case DataType::DT_DATETIME_ORIGINAL: //Cannot use in mysql db data
+				$date = strtotime($value);
+				$returnValue = $date;
+			break;
+			case DataType::DT_TIMESTAMP_ORIGINAL: //Cannot use in mysql db data
+				$date = date_create();
+				date_timestamp_set($date, $value);
+				$returnValue = $date;
+			break;				
+			case DataType::DT_FLOAT:
+				$returnValue = (float)$value;
+			break;
+			case DataType::DT_DOUBLE:
+				$returnValue = (double)$value;
+			break;
+			case DataType::DT_INT:
+				$returnValue = (int)$value;
+			break;		
+			case DataType::DT_BOOL:
+				$returnValue = (bool)$value;
+			break;				
+			default:
+				$returnValue = $value;
 		}
 		return $returnValue;
 	}

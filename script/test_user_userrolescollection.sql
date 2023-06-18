@@ -34,7 +34,7 @@ CREATE TABLE `user_userrolescollection` (
   KEY `FK_User_UserRolesCollection_UserRoles_idx` (`UserRole`),
   CONSTRAINT `FK_User_UserRolesCollection_User` FOREIGN KEY (`User`) REFERENCES `user` (`Id`),
   CONSTRAINT `FK_User_UserRolesCollection_UserRoles` FOREIGN KEY (`UserRole`) REFERENCES `userrole` (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=101 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -43,7 +43,6 @@ CREATE TABLE `user_userrolescollection` (
 
 LOCK TABLES `user_userrolescollection` WRITE;
 /*!40000 ALTER TABLE `user_userrolescollection` DISABLE KEYS */;
-INSERT INTO `user_userrolescollection` VALUES (1,1,1,0),(2,1,2,0),(3,1,3,0);
 /*!40000 ALTER TABLE `user_userrolescollection` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -56,4 +55,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-06-08 17:34:52
+-- Dump completed on 2023-06-18  8:54:13
