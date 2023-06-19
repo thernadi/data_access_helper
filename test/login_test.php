@@ -1,7 +1,6 @@
 <?php
 namespace Rasher\Test;
-use Rasher\Data\DataManagement\{BindingParam};
-use Rasher\Data\DataManagement\Type\{LogicalOperator,Param,FilterParam,ItemAttribute};
+use Rasher\Data\Type\{LogicalOperator,Param,FilterParam,ItemAttribute};
 use Rasher\Common\{Common};
 
 include_once __DIR__."/user_data_repository.php";
@@ -33,8 +32,8 @@ class LoginTest
 	{
 		//UserRole
 		$filters = array();
-		$filters[] = new BindingParam("IsDeleted", "i", 0);
-		$filters[] = new BindingParam("Code", "s", "BASE_USER");
+		$filters[] = new Param("IsDeleted", 0);
+		$filters[] = new Param("Code", "BASE_USER");
 		if (!$this->checkItemInDB($this->dbUserRepository->dbUserRoleRepository, $filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
@@ -44,8 +43,8 @@ class LoginTest
 		}
 
 		$filters = array();
-		$filters[] = new BindingParam("IsDeleted", "i", 0);
-		$filters[] = new BindingParam("Code", "s", "GUEST");
+		$filters[] = new Param("IsDeleted", 0);
+		$filters[] = new Param("Code", "GUEST");
 		if (!$this->checkItemInDB($this->dbUserRepository->dbUserRoleRepository, $filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
@@ -55,8 +54,8 @@ class LoginTest
 		}
 
 		$filters = array();
-		$filters[] = new BindingParam("IsDeleted", "i", 0);
-		$filters[] = new BindingParam("Code", "s", "ADMIN");
+		$filters[] = new Param("IsDeleted", 0);
+		$filters[] = new Param("Code", "ADMIN");
 		if (!$this->checkItemInDB($this->dbUserRepository->dbUserRoleRepository, $filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
@@ -67,8 +66,8 @@ class LoginTest
 
 		//UserSetting
 		$filters = array();
-		$filters[] = new BindingParam("IsDeleted", "i", 0);
-		$filters[] = new BindingParam("Name", "s", "ACTIVE");
+		$filters[] = new Param("IsDeleted", 0);
+		$filters[] = new Param("Name", "ACTIVE");
 		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
@@ -78,8 +77,8 @@ class LoginTest
 		}
 
 		$filters = array();
-		$filters[] = new BindingParam("IsDeleted", "i", 0);
-		$filters[] = new BindingParam("Name", "s", "LOGLEVEL");
+		$filters[] = new Param("IsDeleted", 0);
+		$filters[] = new Param("Name", "LOGLEVEL");
 		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
@@ -89,8 +88,8 @@ class LoginTest
 		}
 
 		$filters = array();
-		$filters[] = new BindingParam("IsDeleted", "i", 0);
-		$filters[] = new BindingParam("Name", "s", "ACCESS_READ");
+		$filters[] = new Param("IsDeleted", 0);
+		$filters[] = new Param("Name", "ACCESS_READ");
 		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
@@ -100,8 +99,8 @@ class LoginTest
 		}
 
 		$filters = array();
-		$filters[] = new BindingParam("IsDeleted", "i", 0);
-		$filters[] = new BindingParam("Name", "s", "ACCESS_WRITE");
+		$filters[] = new Param("IsDeleted", 0);
+		$filters[] = new Param("Name", "ACCESS_WRITE");
 		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
@@ -111,8 +110,8 @@ class LoginTest
 		}
 
 		$filters = array();
-		$filters[] = new BindingParam("IsDeleted", "i", 0);
-		$filters[] = new BindingParam("Name", "s", "ACCESS_DOWNLOAD");
+		$filters[] = new Param("IsDeleted", 0);
+		$filters[] = new Param("Name", "ACCESS_DOWNLOAD");
 		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
@@ -128,9 +127,9 @@ class LoginTest
 		$currentDate = date('Y-m-d H:i:s');	
 
 		$filters = array();
-		$filters[] = new BindingParam("IsDeleted", "i", 0);
-		$filters[] = new BindingParam("LoginName", "s", $loginName);
-		$filters[] = new BindingParam("Password", "s", sha1($password));
+		$filters[] = new Param("IsDeleted", 0);
+		$filters[] = new Param("LoginName", $loginName);
+		$filters[] = new Param("Password", sha1($password));
 		if ($this->checkItemInDB($this->dbUserRepository, $filters, $this->userLogin))
 		{
 			$this->userLogin = $this->userLogin[0];
@@ -238,8 +237,8 @@ class LoginTest
 	{
 		$userRoleCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionItemAttributes());
 		$filters = array();
-		$filters[] = new BindingParam("IsDeleted", "i", 0);
-		$filters[] = new BindingParam("Code", "s", $userRoleCode);		
+		$filters[] = new Param("IsDeleted", 0);
+		$filters[] = new Param("Code", $userRoleCode);		
 		$userRole = $this->dbUserRepository->dbUserRoleRepository->loadByFilter2($filters);
 		$itemAttributeUserRoleCollectionItemUserRole = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserRole");
 		$itemAttributeUserRoleCollectionItemUserRole->value = $userRole[0];
@@ -250,8 +249,8 @@ class LoginTest
 			$settingValue = Param::getParam("Value", $settingValuesParamArray)->value;
 
 			$filters = array();
-			$filters[] = new BindingParam("IsDeleted", "i", 0);
-			$filters[] = new BindingParam("Name", "s", $settingCode);		
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Name", $settingCode);		
 			$userSetting = $this->dbUserRepository->dbUserSettingRepository->loadByFilter2($filters);
 	
 			$itemAttributeUserRoleCollectionItemUserSettingCollection = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserSettingsCollection");
@@ -269,8 +268,8 @@ class LoginTest
 	{	
 		$newUser = null;
 		$filters = array();
-		$filters[] = new BindingParam("IsDeleted", "i", 0);
-		$filters[] = new BindingParam("LoginName", "s", $loginName);		
+		$filters[] = new Param("IsDeleted", 0);
+		$filters[] = new Param("LoginName", $loginName);		
 		if ($this->checkItemInDB($this->dbUserRepository, $filters, $newUser))
 		{		
 			echo "User is already existed!".LINE_SEPARATOR;
@@ -287,8 +286,8 @@ class LoginTest
 			
 			//Set user's DefaultUserRole
 			$filters = array();
-			$filters[] = new BindingParam("IsDeleted", "i", 0);
-			$filters[] = new BindingParam("Code", "s", "BASE_USER");		
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Code", "BASE_USER");		
 			$userRole = $this->dbUserRepository->dbUserRoleRepository->loadByFilter2($filters);
 			$itemAttributeDefaultUserRole = ItemAttribute::getItemAttribute($newUser, "DefaultUserRole");
 			$itemAttributeDefaultUserRole->value = $userRole[0];
@@ -317,7 +316,7 @@ class LoginTest
 	{	
 		$currentUser = null;
 		$filters = array();
-		$filters[] = new BindingParam("LoginName", "s", $loginName);		
+		$filters[] = new Param("LoginName", $loginName);		
 		if (!$this->checkItemInDB($this->dbUserRepository, $filters, $currentUser))
 		{		
 			echo "User is not existed!".LINE_SEPARATOR;

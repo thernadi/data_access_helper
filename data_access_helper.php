@@ -1,20 +1,20 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
-//Data Access Helper For MySQL Database 
+//Data Access Helper and Database Repository for MySQL Database using MySQLi extension
+//Current version: 2.23
 //Dependency: 
 //- data_type_helper.php 
 //- common_static_helper.php
 
-//Current version: 2.22
 //Database table rules: all table contains the fields belows in database.
-//Table level existed fields:
+//Table level existed columns:
 //Id (int, required, primary key)
-//IsDeleted (datetime, default 0)
+//IsDeleted (boolean, default 0)
 
 //Extends class from DbRepository class for using
 
-namespace Rasher\Data\DataManagement;
-use Rasher\Data\DataManagement\Type\{DataType,LogicalOperator,Param,FilterParam,ReferenceDescriptor,ItemAttribute};
+namespace Rasher\Data\MySQLi\DataManagement;
+use Rasher\Data\Type\{DataType,LogicalOperator,Param,FilterParam,ReferenceDescriptor,ItemAttribute};
 use Rasher\Common\{Common};
 use Mysqli;
 
@@ -24,12 +24,17 @@ include_once __DIR__."/common_static_helper.php";
 !defined("LINE_SEPARATOR") && define("LINE_SEPARATOR", "\n\r"); //<br/>
 
 class ConnectionData
-{
+{	
 	public $server = null;
 	public $user = null;
 	public $psw = null;
 	public $db = null;
 
+	/**
+	* ConnectionData constructor
+	* 
+	*
+	*/
 	public function __construct($server, $user, $psw, $db)
 	{
 		$this->server = $server;
@@ -39,8 +44,8 @@ class ConnectionData
 	}
 }
 
-//MySQL ConnectionData single instance
-//Parameters: serverName, userName, password, databaseName
+//MySQLi ConnectionData single instance
+
 //Fill out before using
 $connectionData = new ConnectionData("serverName", "userName", "password", "databaseName");
 
@@ -49,6 +54,11 @@ class StatementResult
 	private $bindVarsArray = array();
 	private $results = array();
 
+	/**
+	* StatementResult constructor
+	* 
+	*
+	*/
 	public function __construct(&$stmt)
 	{
 		$meta = $stmt->result_metadata();
@@ -74,6 +84,12 @@ class StatementResult
 class BindingParam extends Param
 {
 	public $type = null; //i = integer, s = string, d = double, b = blob, (s = datetime) 
+	
+	/**
+	* BindingParam constructor
+	* 
+	*
+	*/
 	public function __construct($name, $type, $value)
 	{
 		parent::__construct($name, $value);
@@ -85,11 +101,22 @@ class DataAccessHelper
 {
 	private $mysqli = null;	
 	protected $connectionData = null;	
+
+	/**
+	* DataAccessHelper constructor
+	* @param ConnectionData $connectionData The MySQLi connection data
+	*
+	*/
 	public function __construct($connectionData)
 	{
 		$this->connectionData = $connectionData;
 	}
 
+	/**
+	* init function which opens a database connection
+	* 
+	*
+	*/
 	private function open()
 	{
 		$this->mysqli = new mysqli($this->connectionData->server, $this->connectionData->user, $this->connectionData->psw, $this->connectionData->db);
@@ -99,18 +126,35 @@ class DataAccessHelper
 		}
 	}
 
+	/**
+	* close function which close a database connection
+	* 
+	*
+	*/
 	private function close()
 	{
 		$this->mysqli->close();
 	}
 
+	/**
+	* init function which opens a database connection with setting charset
+	* 
+	*
+	*/
 	private function init()
 	{
 		$this->open();
 		$this->mysqli->set_charset("utf8");		
 	}
 
-	//Conventional query
+	/**
+	* query function
+	* 
+	*
+	* @param string $query The sql query
+	*
+	* @return Array Return the Array result data set
+	*/
 	public function query($query)
 	{
 		$returnValue = array();
@@ -141,21 +185,37 @@ class DataAccessHelper
 		return $returnValue;
 	}
 	
-	//$params: BindingParam array
+	/**
+	* execute function
+	* 
+	*
+	* @param BindingParam $params BindingParam object array
+	*
+	* @return Array $returnValue The first array item is the binding type string for all parameter the other array items are the parameters 
+	*/
 	private function getStmtBindingParams($params) 
 	{
 		$bindingType = "";
-		$bindingParams = array();
+		$returnValue = array();
 		foreach ($params as $param)
 		{
 			$bindingType .= $param->type;
-			$bindingParams[] = &$param->value; //!important!
+			$returnValue[] = &$param->value; //!important!
 		}
-		array_unshift($bindingParams, $bindingType);
-		return $bindingParams;
+		array_unshift($returnValue, $bindingType);
+		return $returnValue;
 	}
 
-	//prepeared-statement query
+	/**
+	* execute function
+	* 
+	*
+	* @param string $query The prepared-statement sql query
+	* @param BindingParam $params BindingParam object array
+	* @param Array $item ItemAttribute object array which is reserved and using by the extended repository class
+	*
+	* @return Array Return the Array result data set
+	*/
 	public function execute($query, $params, &$item = null)
 	{
 		$returnValue = array();
@@ -168,7 +228,7 @@ class DataAccessHelper
 			if ($params !== null && count($params) > 0)
 			{
 				$bindingParams = $this->getStmtBindingParams($params);					
-				call_user_func_array(array($stmt,"bind_param"), $bindingParams);
+				call_user_func_array(array($stmt, "bind_param"), $bindingParams);
 			}
 			if ($stmt->execute())
 			{
@@ -210,7 +270,15 @@ class DataAccessHelper
 		return $returnValue;
 	}
 
-	//prepared-statement query
+	/**
+	* executeScalar function
+	* 
+	*
+	* @param string $query The prepared-statement sql query
+	* @param BindingParam $params BindingParam object array
+	*
+	* @return scalar Return the scalar result 
+	*/
 	public function executeScalar($query, $params)
 	{
 		$returnValue = null;
@@ -246,10 +314,17 @@ class DataAccessHelper
 		return $returnValue;
 	}
 	
-	//Check wether an array contains a value (for the conventional query result)
-	//$name: column name
-	//$value: search value
-	//$rows: array($row-array)
+	/**
+	* isValueInRows function check wether an array contains a value (for the conventional query result)
+	* 
+	*
+	* @param string $name The column name
+	* @param string $value The search value
+	* @param Array-Array $rows The result data set array
+	* @param Array $outputRow The found data result array
+	*
+	* @return boolean Return true if found the row data and false if not
+	*/
 	public function isValueInRows($name, $value, $rows, &$outputRow) 
 	{
 		$outputRow = null;
@@ -273,8 +348,8 @@ class DataAccessHelper
 
 class DbRepository extends DataAccessHelper
 {
-	protected $tbl = null; //string, only for statement queries
-	public $itemAttributes = null; //array, only ItemAttribute array without values for statement queries
+	protected $tbl = null;
+	public $itemAttributes = null; //ItemAttribute object array without values, it is only the data structure
 	public function __construct($connectionData, $tbl, $itemAttributes)
 	{
 		parent::__construct($connectionData);
@@ -374,21 +449,19 @@ class DbRepository extends DataAccessHelper
 		return $returnValue;
 	}
 
-	//$item: ItemAttribute array  
-	//for setting saving parameters
-	protected function getParamsByItem($item)
+	protected function convertParamArrayToBindingParamArray($paramArray, $itemAttributes = null)
 	{
-		$returnValue = array();
-		foreach ($item as $key => $value)
+		if ($itemAttributes === null)
 		{
-			if ($value->name === "Id" 
-			|| $value->dataType === DataType::DT_LIST)
-			{
-				continue;
-			}
-			
+			$itemAttributes = $this->itemAttributes;
+		}
+
+		$returnValue = array();
+		foreach ($paramArray as $param) 
+		{
+			$attr = ItemAttribute::getItemAttribute($itemAttributes, $param->name);
 			$bindingType = "";		
-			switch ($value->dataType) 
+			switch ($attr->dataType) 
 			{
 			case DataType::DT_DATETIME:
 			case DataType::DT_TIMESTAMP:
@@ -406,15 +479,33 @@ class DbRepository extends DataAccessHelper
 			default:
 				$bindingType = "s";
 			}
-			
+
+			$returnValue[] = new BindingParam($param->name, $bindingType, $param->value);
+		}
+		return $returnValue;
+	}
+
+	//$item: ItemAttribute array  
+	//for setting saving parameters
+	protected function getParamsByItem($item)
+	{
+		$returnValue = array();
+		foreach ($item as $key => $value)
+		{
+			if ($value->name === "Id" 
+			|| $value->dataType === DataType::DT_LIST)
+			{
+				continue;
+			}
+					
 			if ($value->dataType !== DataType::DT_ITEM)
 			{
-				$returnValue[] = new BindingParam($value->name, $bindingType, $value->value);
+				$returnValue[] = new Param($value->name, $value->value);
 			}
 			else //DT_ITEM
 			{
 				$itemAttributeId = ItemAttribute::getItemAttribute($value->value, "Id");
-				$returnValue[] = new BindingParam($value->name, $bindingType, $itemAttributeId->value);
+				$returnValue[] = new Param($value->name, $itemAttributeId->value);
 			}
 		}	
 		return $returnValue;
@@ -425,15 +516,15 @@ class DbRepository extends DataAccessHelper
 	{
 		$query = "SELECT * FROM " . $this->tbl . " WHERE IsDeleted = ? ORDER BY Id asc";
 		$params = array();
-		$params[] = new BindingParam("IsDeleted", "i", 0);
-		$returnValue = $this->execute($query, $params);
+		$params[] = new Param("IsDeleted", 0);
+		$returnValue = $this->execute($query, $this->convertParamArrayToBindingParamArray($params));
 		return $this->convertToItemAttributeArrayArray($returnValue);
 	}
 
 	//This function can load all items with the type of "DT_ITEM" item together (there it is filled out its "Id" only) but the "DT_LIST" are not loaded. 
 	public function loadByFilter($filters, $fields, $orderFields, $orderDirection = null) 
-	//$filters: $BindingParam object array 
-	//$fields = neeeded fields array  
+	//$filters: Param object array 
+	//$fields = needed fields array  
 	//$orderFields: array
 	//$orderDirection: asc/desc/null
 	{
@@ -473,12 +564,13 @@ class DbRepository extends DataAccessHelper
 			else
 				$query .=" asc";
 		}
-		$returnValue = $this->execute($query, $filters);
+	
+		$returnValue = $this->execute($query, $this->convertParamArrayToBindingParamArray($filters));
 		return $this->convertToItemAttributeArrayArray($returnValue);
 	}
 
 	//This function can load filtered items with the type of "DT_ITEM" item together (there it is filled out its "Id" only) but the "DT_LIST" are not loaded. 
-	//$filters: $BindingParam object array
+	//$filters: Param object array
 	public function loadByFilter2($filters)
 	{	
 		return $this->loadByFilter($filters, array(), array("Id"), "asc");
@@ -500,9 +592,9 @@ class DbRepository extends DataAccessHelper
 
 		$query = "SELECT * FROM " . $tbl . " WHERE ".$idAttributeName." = ? AND IsDeleted = ?";
 		$params = array();
-		$params[] = new BindingParam($idAttributeName, "i", $id);
-		$params[] = new BindingParam("IsDeleted", "i", 0);
-		$returnValue = $this->execute($query, $params);
+		$params[] = new Param($idAttributeName, $id);
+		$params[] = new Param("IsDeleted", 0);
+		$returnValue = $this->execute($query, $this->convertParamArrayToBindingParamArray($params, $itemAttributes));
 		$returnValue = $this->convertToItemAttributeArrayArray($returnValue, $itemAttributes);
 
 		foreach($returnValue as $outterKey => $outterValue)
@@ -545,9 +637,9 @@ class DbRepository extends DataAccessHelper
 				$q_fnames .= $param->name." = ?, ";
 			}
 			$q_fnames = substr($q_fnames, 0, strlen($q_fnames) - 2);
-			$params[] = new BindingParam("Id", "i", $itemAttributeId->value);
+			$params[] = new Param("Id", $itemAttributeId->value);
 			$query = "UPDATE ". $tbl ." SET ".$q_fnames." WHERE Id = ?";
-			$this->execute($query, $params);
+			$this->execute($query, $this->convertParamArrayToBindingParamArray($params, $item));
 		}
 		else //INSERT
 		{
@@ -559,7 +651,7 @@ class DbRepository extends DataAccessHelper
 			$q_fnames = substr($q_fnames, 0, strlen($q_fnames) - 2);
 			$q_fparams = substr($q_fparams, 0, strlen($q_fparams) - 2);
 			$query = "INSERT INTO ". $tbl ." (".$q_fnames.") VALUES (".$q_fparams.")";
-			$this->execute($query, $params, $item);
+			$this->execute($query, $this->convertParamArrayToBindingParamArray($params, $item), $item);
 		}
 
 		foreach($item as $key => $value)
@@ -580,7 +672,7 @@ class DbRepository extends DataAccessHelper
 	{
 		$query = "DELETE FROM " . $this->tbl;
 		$params = array();
-		$this->execute($query, $params);
+		$this->execute($query, $this->convertParamArrayToBindingParamArray($params));
 	}
 	
 	public function delete($item, $tbl = null, &$queryBuffer = null)
@@ -601,7 +693,7 @@ class DbRepository extends DataAccessHelper
 
 		$query = "DELETE FROM " . $tbl." WHERE Id = ?";
 		$params = array();
-		$params[] = new BindingParam("Id", "i", $itemAttributeId->value);	
+		$params[] = new Param("Id", $itemAttributeId->value);	
 		$queryBuffer[] = array("query" => $query, "params" => $params);		
 
 		foreach($item as $key => $value)
@@ -619,7 +711,7 @@ class DbRepository extends DataAccessHelper
 		{
 			for($i = count($queryBuffer) - 1; $i >= 0; $i--)
 			{
-				$this->execute($queryBuffer[$i]["query"], $queryBuffer[$i]["params"]);
+				$this->execute($queryBuffer[$i]["query"], $this->convertParamArrayToBindingParamArray($queryBuffer[$i]["params"], $item));
 			}
 		}
 	}
@@ -627,15 +719,15 @@ class DbRepository extends DataAccessHelper
 	public function getMaxField($fieldName)
 	{
 		$query = "SELECT DISTINCT MAX(".$fieldName.") FROM ". $this->tbl . " WHERE IsDeleted = ?";
-		$params[] = new BindingParam("IsDeleted", "i", 0);
-		return $this->executeScalar($query, $params);
+		$params[] = new Param("IsDeleted", 0);
+		return $this->executeScalar($query, $this->convertParamArrayToBindingParamArray($params));
 	}
 
 	public function getMinField($fieldName)
 	{
 		$query = "SELECT DISTINCT MIN(".$fieldName.") FROM ". $this->tbl . " WHERE IsDeleted = ?";
-		$params[] = new BindingParam("IsDeleted", "i", 0);		
-		return $this->executeScalar($query, $params);
+		$params[] = new Param("IsDeleted", 0);		
+		return $this->executeScalar($query, $this->convertParamArrayToBindingParamArray($params));
 	}
 	
 	//$name: attribute name

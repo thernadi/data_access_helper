@@ -1,8 +1,7 @@
 <?php
-
-namespace Rasher\Data\DataManagement\UserManagement;
-use Rasher\Data\DataManagement\{DbRepository};
-use Rasher\Data\DataManagement\Type\{DataType,ReferenceDescriptor,ItemAttribute};
+namespace Rasher\Data\UserManagement;
+use Rasher\Data\MySQLi\DataManagement\{DbRepository};
+use Rasher\Data\Type\{DataType,ReferenceDescriptor,ItemAttribute};
 
 include_once __DIR__."/../data_access_helper.php";
 

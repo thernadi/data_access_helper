@@ -1,6 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
-namespace Rasher\Data\DataManagement\Type;
+
+namespace Rasher\Data\Type;
 
 abstract class DataType
 {
