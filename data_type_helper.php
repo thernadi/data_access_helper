@@ -190,7 +190,7 @@ class ItemAttribute
 				{
 					$item->setReferenceDescriptor($val->referenceDescriptor);
 				}
-				$returnValue[] = $item;
+				$returnValue[$item->name] = $item;
 			}
 		}
 		return $returnValue;		
@@ -221,7 +221,7 @@ class ItemAttribute
 
 			$itemAttributes = $itemAttributes->value;
 			if (count($itemAttributes) > 0 
-			&& is_array($itemAttributes[0]))
+			&& is_array($itemAttributes[array_keys($itemAttributes)[0]]))
 			{	
 				$returnValue = array();
 				foreach($itemAttributes as $val)
@@ -237,7 +237,7 @@ class ItemAttribute
 		else
 		{
 			if (count($itemAttributes) > 0 
-			&& is_object($itemAttributes[0]))
+			&& is_object($itemAttributes[array_keys($itemAttributes)[0]]))
 			{
 				foreach($itemAttributes as $key => $val) 
 				{		
