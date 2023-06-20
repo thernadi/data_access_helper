@@ -3,7 +3,7 @@ namespace Rasher\Data\UserManagement;
 use Rasher\Data\MySQLi\DataManagement\{DbRepository};
 use Rasher\Data\Type\{DataType,ReferenceDescriptor,ItemAttribute};
 
-include_once __DIR__."/../data_access_helper.php";
+include_once __DIR__."/../db_repository_base_mysqli.php";
 include_once __DIR__."/usersetting_data_repository.php";
 include_once __DIR__."/userrole_data_repository.php";
 //------------------------------------
@@ -76,19 +76,15 @@ class DbUserRepository extends DbRepository
 	{
 		$query = "DELETE FROM User_UserRolesCollection";
 		$params = array();
-		$this->execute($query, $this->convertParamArrayToBindingParamArray($params));
+		$this->execute($query, $this->convertParamArrayToDBSpecificParamArray($params));
 	}
 
 	public function deleteAll_User_UserRolesCollection_UserSettingsCollection()
 	{
 		$query = "DELETE FROM User_UserRolesCollection_UserSettingsCollection";
 		$params = array();
-		$this->execute($query, $this->convertParamArrayToBindingParamArray($params));
+		$this->execute($query, $this->convertParamArrayToDBSpecificParamArray($params));
 	}
 }
-
-//DbUserRepository single instance
-$dbUserRepository = new DbUserRepository($connectionData, $dbUserSettingRepository, $dbUserRoleRepository);
-
 
 ?>

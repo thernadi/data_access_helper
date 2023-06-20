@@ -1,5 +1,12 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
+//Data Access Layer Helper and Database Repository for MySQL Database using MySQLi extension
+//Current version: 2.25
+
+//Database table rules: all table contains the fields belows in database.
+//Table level existed columns:
+//Id (int, required, primary key)
+//IsDeleted (boolean, default 0)
 
 namespace Rasher\Data\Type;
 

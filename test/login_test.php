@@ -1,5 +1,7 @@
 <?php
 namespace Rasher\Test;
+use Rasher\Data\MySQLi\DataManagement\{ConnectionData};
+use Rasher\Data\UserManagement\{DbUserSettingRepository,DbUserRoleRepository,DbUserRepository};
 use Rasher\Data\Type\{LogicalOperator,Param,FilterParam,ItemAttribute};
 use Rasher\Common\{Common};
 
@@ -34,7 +36,7 @@ class LoginTest
 		$filters = array();
 		$filters[] = new Param("IsDeleted", 0);
 		$filters[] = new Param("Code", "BASE_USER");
-		if (!$this->checkItemInDB($this->dbUserRepository->dbUserRoleRepository, $filters, $item))
+		if (!$this->dbUserRepository->dbUserRoleRepository->checkItemInDB($filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
 			$item["Code"]->value = "BASE_USER";
@@ -45,7 +47,7 @@ class LoginTest
 		$filters = array();
 		$filters[] = new Param("IsDeleted", 0);
 		$filters[] = new Param("Code", "GUEST");
-		if (!$this->checkItemInDB($this->dbUserRepository->dbUserRoleRepository, $filters, $item))
+		if (!$this->dbUserRepository->dbUserRoleRepository->checkItemInDB($filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
 			$item["Code"]->value = "GUEST";
@@ -56,7 +58,7 @@ class LoginTest
 		$filters = array();
 		$filters[] = new Param("IsDeleted", 0);
 		$filters[] = new Param("Code", "ADMIN");
-		if (!$this->checkItemInDB($this->dbUserRepository->dbUserRoleRepository, $filters, $item))
+		if (!$this->dbUserRepository->dbUserRoleRepository->checkItemInDB($filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
 			$item["Code"]->value = "ADMIN";
@@ -68,7 +70,7 @@ class LoginTest
 		$filters = array();
 		$filters[] = new Param("IsDeleted", 0);
 		$filters[] = new Param("Name", "ACTIVE");
-		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
+		if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
 			$item["Name"]->value = "ACTIVE";
@@ -79,7 +81,7 @@ class LoginTest
 		$filters = array();
 		$filters[] = new Param("IsDeleted", 0);
 		$filters[] = new Param("Name", "LOGLEVEL");
-		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
+		if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
 			$item["Name"]->value = "LOGLEVEL";
@@ -90,7 +92,7 @@ class LoginTest
 		$filters = array();
 		$filters[] = new Param("IsDeleted", 0);
 		$filters[] = new Param("Name", "ACCESS_READ");
-		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
+		if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
 			$item["Name"]->value = "ACCESS_READ";
@@ -101,7 +103,7 @@ class LoginTest
 		$filters = array();
 		$filters[] = new Param("IsDeleted", 0);
 		$filters[] = new Param("Name", "ACCESS_WRITE");
-		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
+		if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
 			$item["Name"]->value = "ACCESS_WRITE";
@@ -112,7 +114,7 @@ class LoginTest
 		$filters = array();
 		$filters[] = new Param("IsDeleted", 0);
 		$filters[] = new Param("Name", "ACCESS_DOWNLOAD");
-		if (!$this->checkItemInDB($this->dbUserRepository->dbUserSettingRepository, $filters, $item))
+		if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
 		{
 			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
 			$item["Name"]->value = "ACCESS_DOWNLOAD";
@@ -130,7 +132,7 @@ class LoginTest
 		$filters[] = new Param("IsDeleted", 0);
 		$filters[] = new Param("LoginName", $loginName);
 		$filters[] = new Param("Password", sha1($password));
-		if ($this->checkItemInDB($this->dbUserRepository, $filters, $this->userLogin))
+		if ($this->dbUserRepository->checkItemInDB($filters, $this->userLogin))
 		{
 			$this->userLogin = $this->userLogin[0];
 			$this->userLogin["IsLogged"]->value = 1;
@@ -261,7 +263,7 @@ class LoginTest
 		$filters = array();
 		$filters[] = new Param("IsDeleted", 0);
 		$filters[] = new Param("LoginName", $loginName);		
-		if ($this->checkItemInDB($this->dbUserRepository, $filters, $newUser))
+		if ($this->dbUserRepository->checkItemInDB($filters, $newUser))
 		{		
 			echo "User is already existed!".LINE_SEPARATOR;
 		}
@@ -304,7 +306,7 @@ class LoginTest
 		$currentUser = null;
 		$filters = array();
 		$filters[] = new Param("LoginName", $loginName);		
-		if (!$this->checkItemInDB($this->dbUserRepository, $filters, $currentUser))
+		if (!$this->dbUserRepository->checkItemInDB($filters, $currentUser))
 		{		
 			echo "User is not existed!".LINE_SEPARATOR;
 		}
@@ -316,21 +318,6 @@ class LoginTest
 			echo "User deleted!".LINE_SEPARATOR;
 		}
 	}
-
-	private function checkItemInDB($dbRepository, $filters, &$item)
-	{
-		$returnValue = false;
-		$item = $dbRepository->loadByFilter2($filters);
-		if(isset($item) && count($item) > 0)
-		{
-			$returnValue = true;
-		}
-		else
-		{
-			$item = null;
-		}		
-		return $returnValue;	
-	}
 }
 
 try
@@ -339,6 +326,17 @@ try
 
 	//error_reporting(0); //only production environment
 	error_reporting(E_ALL); //for detail error reporting
+
+	//MySQLi ConnectionData single instance
+	//Fill out before using
+	$connectionData = new ConnectionData("serverName", "userName", "password", "databaseName");
+
+	//DbUserRoleRepository single instance
+	$dbUserRoleRepository = new DbUserRoleRepository($connectionData);
+	//DbUserSettingRepository single instance
+	$dbUserSettingRepository = new DbUserSettingRepository($connectionData);
+	//DbUserRepository single instance
+	$dbUserRepository = new DbUserRepository($connectionData, $dbUserSettingRepository, $dbUserRoleRepository);
 
 	$loginTest = new LoginTest($dbUserRepository);
 	//Comment out if you want to modify this class for several times!

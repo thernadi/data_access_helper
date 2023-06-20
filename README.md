@@ -1,4 +1,4 @@
-# DataAccessHelper
+# DataAccessLayerHelper
 # DBRepository
 
 PHP Data Access Layer Helper & DataBase Repository
@@ -20,7 +20,7 @@ Currently, it can:
 - Better data attribute's searching specially for collectionitem (DT_LIST)'s attributes
 
 //CURRENT-WORKING:
-- PDO extension ability (we need a new Data Access Helper class for PDO and the current DBRepository class revision without MySQL data binding solution and extended from the common DBRepositoryBase class).
+- PDO extension ability
 
 //LATER DEVELOPMENT PHASE
 - Filtering searching items with more relations via Param, FilterParam

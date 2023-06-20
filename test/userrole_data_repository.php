@@ -3,7 +3,7 @@ namespace Rasher\Data\UserManagement;
 use Rasher\Data\MySQLi\DataManagement\{DbRepository};
 use Rasher\Data\Type\{DataType,ReferenceDescriptor,ItemAttribute};
 
-include_once __DIR__."/../data_access_helper.php";
+include_once __DIR__."/../db_repository_base_mysqli.php";
 
 //------------------------------------
 //UserRole repository implementations
@@ -21,8 +21,5 @@ class DbUserRoleRepository extends DbRepository
 		parent::__construct($connectionData, "UserRole", $itemAttributes);
 	}
 }
-
-//DbUserRoleRepository single instance
-$dbUserRoleRepository = new DbUserRoleRepository($connectionData);
 
 ?>
