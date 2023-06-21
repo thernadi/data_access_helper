@@ -1,12 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
-//Data Access Layer Helper and Database Repository for MySQL Database using MySQLi extension
-//Current version: 2.25
-
-//Database table rules: all table contains the fields belows in database.
-//Table level existed columns:
-//Id (int, required, primary key)
-//IsDeleted (boolean, default 0)
+//Data Type Helper
+//Current version: 2.26
 
 namespace Rasher\Data\Type;
 
@@ -23,6 +18,7 @@ abstract class DataType
 	const DT_BOOL = 9;
 	const DT_LIST = 10;
 	const DT_ITEM = 11;
+	const DT_BLOB = 12;
 }
 
 abstract class LogicalOperator

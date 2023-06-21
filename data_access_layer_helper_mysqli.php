@@ -1,21 +1,16 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
-//Data Access Layer Helper and Database Repository for MySQL Database using MySQLi extension
-//Current version: 2.25
-
-//Database table rules: all table contains the fields belows in database.
-//Table level existed columns:
-//Id (int, required, primary key)
-//IsDeleted (boolean, default 0)
+//Data Access Layer Helper for access MySQL Database using MySQLi extension
+//Current version: 2.26
 
 namespace Rasher\Data\MySQLi\DataManagement;
+use Rasher\Data\DataManagement\{DataAccessLayerHelperBase};
 use Rasher\Data\Type\{Param,ItemAttribute};
 use Mysqli;
 
 include_once __DIR__."/data_type_helper.php";
+include_once __DIR__."/data_access_layer_helper_base.php";
 include_once __DIR__."/common_static_helper.php";
-
-!defined("LINE_SEPARATOR") && define("LINE_SEPARATOR", "\n\r"); //<br/>
 
 class ConnectionData
 {	
@@ -86,7 +81,7 @@ class BindingParam extends Param
 	}
 }
 
-class DataAccessLayerHelper
+class DataAccessLayerHelper extends DataAccessLayerHelperBase
 {
 	private $mysqli = null;	
 	protected $connectionData = null;	
@@ -102,17 +97,13 @@ class DataAccessLayerHelper
 	}
 
 	/**
-	* open function which opens a database connection
+	* open function which opens and inits a database connection
 	* 
 	*
 	*/
 	private function open()
 	{
-		$this->mysqli = new mysqli($this->connectionData->server, $this->connectionData->user, $this->connectionData->psw, $this->connectionData->db);
-		if ($this->mysqli->connect_errno)
-		{
-			throw new Exception(LINE_SEPARATOR."Cannot connect into the database!".LINE_SEPARATOR.$this->mysqli->connect_error);
-		}
+		$this->init();
 	}
 
 	/**
@@ -132,8 +123,13 @@ class DataAccessLayerHelper
 	*/
 	private function init()
 	{
-		$this->open();
-		$this->mysqli->set_charset("utf8");		
+		$this->mysqli = new mysqli($this->connectionData->server, $this->connectionData->user, $this->connectionData->psw, $this->connectionData->db);
+		if ($this->mysqli->connect_errno)
+		{
+			throw new \Exception(LINE_SEPARATOR."Cannot connect into the database!".LINE_SEPARATOR.$this->mysqli->connect_error);
+		}
+		$this->mysqli->set_charset("utf8");
+		mysqli_report(MYSQLI_REPORT_ERROR|MYSQLI_REPORT_STRICT);		
 	}
 
 	/**
@@ -149,7 +145,7 @@ class DataAccessLayerHelper
 		$returnValue = array();
 		try
 		{
-			$this->init();
+			$this->open();
 			if ($result = $this->mysqli->query($query))
 			{
 				if ($result->num_rows > 0)
@@ -163,19 +159,20 @@ class DataAccessLayerHelper
 			}
 			else
 			{
-				throw new Exception(LINE_SEPARATOR."Error in the query!".LINE_SEPARATOR.$this->mysqli->error.LINE_SEPARATOR."Query:".LINE_SEPARATOR.$query.LINE_SEPARATOR);
+				throw new \Exception(LINE_SEPARATOR."Error in the query!".LINE_SEPARATOR.$this->mysqli->error.LINE_SEPARATOR."Query:".LINE_SEPARATOR.$query.LINE_SEPARATOR);
 			}
 			$this->close();
 		}
 		catch (\Throwable $e)
 		{
 			echo $e->getMessage();
+			throw new \Exception(LINE_SEPARATOR."DAL Error!");
 		}
 		return $returnValue;
 	}
 	
 	/**
-	* execute function
+	* getStmtBindingParams function
 	* 
 	*
 	* @param BindingParam $params BindingParam object array
@@ -210,7 +207,7 @@ class DataAccessLayerHelper
 		$returnValue = array();
 		try
 		{
-			$this->init();
+			$this->open();
 			$bindingParams = array();
 			$stmt = $this->mysqli->stmt_init();
 			$stmt->prepare($query);
@@ -238,7 +235,7 @@ class DataAccessLayerHelper
 			}
 			else
 			{
-				throw new Exception(LINE_SEPARATOR."Error in the query!".LINE_SEPARATOR.$stmt->error.LINE_SEPARATOR."Query:".LINE_SEPARATOR.$query.LINE_SEPARATOR."Parameters:".LINE_SEPARATOR.var_dump($bindingParams).LINE_SEPARATOR);
+				throw new \Exception(LINE_SEPARATOR."Error in the query!".LINE_SEPARATOR.$stmt->error.LINE_SEPARATOR."Query:".LINE_SEPARATOR.$query.LINE_SEPARATOR."Parameters:".LINE_SEPARATOR.var_dump($bindingParams).LINE_SEPARATOR);
 			}
 			
 			if (count($returnValue) === 0 && $item !== null)
@@ -255,6 +252,7 @@ class DataAccessLayerHelper
 		catch (\Throwable $e)
 		{
 			echo $e->getMessage();
+			throw new \Exception(LINE_SEPARATOR."DAL Error!");
 		}
 		return $returnValue;
 	}
@@ -273,7 +271,7 @@ class DataAccessLayerHelper
 		$returnValue = null;
 		try
 		{
-			$this->init();
+			$this->open();
 			$bindingParams = array();
 			$stmt = $this->mysqli->stmt_init();
 			$stmt->prepare($query);
@@ -291,7 +289,7 @@ class DataAccessLayerHelper
 			}
 			else
 			{
-				throw new Exception(LINE_SEPARATOR."Error in the query!".LINE_SEPARATOR. $stmt->error.LINE_SEPARATOR."Query:".LINE_SEPARATOR.$query.LINE_SEPARATOR."Parameters:".LINE_SEPARATOR.var_dump($bindingParams).LINE_SEPARATOR);
+				throw new \Exception(LINE_SEPARATOR."Error in the query!".LINE_SEPARATOR. $stmt->error.LINE_SEPARATOR."Query:".LINE_SEPARATOR.$query.LINE_SEPARATOR."Parameters:".LINE_SEPARATOR.var_dump($bindingParams).LINE_SEPARATOR);
 			}
 			$stmt->close();
 			$this->close();
@@ -299,38 +297,9 @@ class DataAccessLayerHelper
 		catch (\Throwable $e)
 		{
 			echo $e->getMessage();
+			throw new \Exception(LINE_SEPARATOR."DAL Error!");
 		}
 		return $returnValue;
-	}
-	
-	/**
-	* isValueInRows function check wether an array contains a value (for the conventional query result)
-	* 
-	*
-	* @param string $name The column name
-	* @param string $value The search value
-	* @param array $rows The result data set array (array(array()))
-	* @param array $outputRow The found data result array
-	*
-	* @return boolean Return true if found the row data and false if not
-	*/
-	public function isValueInRows($name, $value, $rows, &$outputRow) 
-	{
-		$outputRow = null;
-		$returnValue = false;
-		foreach ($rows as $row)
-		{
-			foreach($row as $key => $val) 
-			{
-				if ($key === $name)
-				{
-					$returnValue = true;
-					$outputRow = $row;
-					break;
-				}
-			}	
-		}
-		return  $returnValue;
 	}
 }
 

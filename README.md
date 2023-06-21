@@ -3,13 +3,13 @@
 
 PHP Data Access Layer Helper & DataBase Repository
 
-This package can run queries to access data from a MySQL database (at the momment).
+This package can run queries to access data from many databases via MySQLi or PDO extensions.
 
-It provides several classes that can connect to a MySQL database and executes SQL queries to perform several types of data access to database tables.
+It provides several classes that can connect to many databases and executes SQL queries to perform several types of data access to database tables.
 
 Currently, it can:
 
-- Connect to a MySQL database server with a given user and password
+- Connect to a database server via MySQLi or PDO extensions
 
 - Execute prepared queries and get the results as an array or by result column name
 
@@ -18,9 +18,6 @@ Currently, it can:
 - Manipulate database record column values according to the respective data type
 
 - Better data attribute's searching specially for collectionitem (DT_LIST)'s attributes
-
-//CURRENT-WORKING:
-- PDO extension ability
 
 //LATER DEVELOPMENT PHASE
 - Filtering searching items with more relations via Param, FilterParam

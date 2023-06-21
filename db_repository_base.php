@@ -1,12 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
-//Data Access Layer Helper and Database Repository for MySQL Database using MySQLi extension
-//Current version: 2.25
-
-//Database table rules: all table contains the fields belows in database.
-//Table level existed columns:
-//Id (int, required, primary key)
-//IsDeleted (boolean, default 0)
+//Db Repository Base
+//Current version: 2.26
 
 namespace Rasher\Data\DataManagement;
 use Rasher\Data\Type\{DataType,LogicalOperator,Param,FilterParam,ReferenceDescriptor,ItemAttribute};
@@ -20,6 +15,16 @@ include_once __DIR__."/common_static_helper.php";
 //ABSTRACT
 trait DbRepositoryBase
 {
+	protected $tbl = null;
+	public $itemAttributes = null; //ItemAttribute object array without values, it is only the data structure
+
+	public function __construct($connectionData, $tbl, $itemAttributes)
+	{
+		parent::__construct($connectionData);
+		$this->tbl = $tbl;
+		$this->itemAttributes = $itemAttributes;
+	}
+
 	public function getMinField($fieldName)
 	{
 		$query = "SELECT DISTINCT MIN(".$fieldName.") FROM ". $this->tbl . " WHERE IsDeleted = ?";

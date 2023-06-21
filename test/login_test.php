@@ -1,6 +1,7 @@
 <?php
 namespace Rasher\Test;
-use Rasher\Data\MySQLi\DataManagement\{ConnectionData};
+use Rasher\Data\PDO\DataManagement\{ConnectionData}; //PDO extension
+//use Rasher\Data\MySQLi\DataManagement\{ConnectionData}; //MySQLi extension
 use Rasher\Data\UserManagement\{DbUserSettingRepository,DbUserRoleRepository,DbUserRepository};
 use Rasher\Data\Type\{LogicalOperator,Param,FilterParam,ItemAttribute};
 use Rasher\Common\{Common};
@@ -324,12 +325,12 @@ try
 {
 	//TEST
 
-	//error_reporting(0); //only production environment
-	error_reporting(E_ALL); //for detail error reporting
+	error_reporting(0); //only production environment
+	//error_reporting(E_ALL); //for detail error reporting
 
-	//MySQLi ConnectionData single instance
-	//Fill out before using
-	$connectionData = new ConnectionData("serverName", "userName", "password", "databaseName");
+	//Fill connectionData out before using
+	//$connectionData = new ConnectionData("localhost", "userName", "password", "test"); // use it with MySQLi extension
+	$connectionData = new ConnectionData("mysql:host=localhost;dbname=test", "userName", "password"); // use it with PDO extension
 
 	//DbUserRoleRepository single instance
 	$dbUserRoleRepository = new DbUserRoleRepository($connectionData);

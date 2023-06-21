@@ -1,6 +1,6 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
-//Db Repository for access MySQL Database using MySQLi extension
+//Db Repository for access Databases using PDO extension
 //Current version: 2.26
 
 //Database table rules: all table contains the fields belows in database.
@@ -8,11 +8,12 @@
 //Id (int, required, primary key)
 //IsDeleted (boolean, default 0)
 
-namespace Rasher\Data\MySQLi\DataManagement;
+namespace Rasher\Data\PDO\DataManagement;
+use PDO;
 use Rasher\Data\DataManagement\{DbRepositoryBase};
 use Rasher\Data\Type\{DataType,ItemAttribute};
 
-include_once __DIR__."/data_access_layer_helper_mysqli.php";
+include_once __DIR__."/data_access_layer_helper_pdo.php";
 include_once __DIR__."/db_repository_base.php";
 include_once __DIR__."/data_type_helper.php";
 include_once __DIR__."/common_static_helper.php";
@@ -37,19 +38,22 @@ abstract class DbRepository extends DataAccessLayerHelper
 			{
 			case DataType::DT_DATETIME:
 			case DataType::DT_TIMESTAMP:
-				$bindingType = "s";
-				break;
 			case DataType::DT_FLOAT:
 			case DataType::DT_DOUBLE:
-				$bindingType = "d";
+				$bindingType = PDO::PARAM_STR;
 				break;
 			case DataType::DT_ITEM:	
 			case DataType::DT_INT:
+				$bindingType = PDO::PARAM_INT;
+				break;
 			case DataType::DT_BOOL:
-				$bindingType = "i";
+				$bindingType = PDO::PARAM_BOOL;
+				break;
+			case DataType::DT_BLOB:
+				$bindingType = PDO::PARAM_LOB;
 				break;
 			default:
-				$bindingType = "s";
+				$bindingType = PDO::PARAM_STR;
 			}
 
 			$returnValue[] = new BindingParam($param->name, $bindingType, $param->value);
