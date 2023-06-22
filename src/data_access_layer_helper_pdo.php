@@ -110,7 +110,7 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 		$returnValue = array();
 		try
 		{
-			$this->init();
+			$this->open();
 			$result = $this->pdo->query($query, PDO::FETCH_ASSOC);
 			foreach($result as $row)
 			{
@@ -164,7 +164,7 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 		}
 		catch (\Throwable $e)
 		{
-			echo LINE_SEPARATOR."Error in the query!".LINE_SEPARATOR.$e->getMessage().LINE_SEPARATOR."Query:".LINE_SEPARATOR.$query.LINE_SEPARATOR;
+			echo LINE_SEPARATOR."Error in the query!".LINE_SEPARATOR.$e->getMessage().LINE_SEPARATOR."Query:".LINE_SEPARATOR.$query.LINE_SEPARATOR."Parameters:".LINE_SEPARATOR.var_dump($params).LINE_SEPARATOR;
 			throw new \Exception(LINE_SEPARATOR."DAL Error!");
 		}
 		return $returnValue;
@@ -197,8 +197,8 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 		}
 		catch (\Throwable $e)
 		{
-			echo LINE_SEPARATOR."Error in the query!".LINE_SEPARATOR.$e->getMessage().LINE_SEPARATOR."Query:".LINE_SEPARATOR.$query.LINE_SEPARATOR;
-			throw new \Exception(LINE_SEPARATOR."DAL error!");
+			echo LINE_SEPARATOR."Error in the query!".LINE_SEPARATOR.$e->getMessage().LINE_SEPARATOR."Query:".LINE_SEPARATOR.$query.LINE_SEPARATOR."Parameters:".LINE_SEPARATOR.var_dump($params).LINE_SEPARATOR;
+			throw new \Exception(LINE_SEPARATOR."DAL Error!");
 		}
 		return $returnValue;
 	}

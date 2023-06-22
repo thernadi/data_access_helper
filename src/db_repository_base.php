@@ -10,8 +10,6 @@ use Rasher\Common\{Common};
 include_once __DIR__."/data_type_helper.php";
 include_once __DIR__."/common_static_helper.php";
 
-!defined("LINE_SEPARATOR") && define("LINE_SEPARATOR", "\n\r"); //<br/>
-
 //ABSTRACT
 trait DbRepositoryBase
 {

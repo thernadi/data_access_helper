@@ -177,7 +177,8 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	*
 	* @param BindingParam $params BindingParam object array
 	*
-	* @return array $returnValue The first array item is the binding type string for all parameter the others are the parameter values 
+	* @return array $returnValue The first array item is the binding type string for all parameter the others are the parameter values.
+	* It is the input parameter to the mysqli bind_param function
 	*/
 	private function getStmtBindingParams($params) 
 	{

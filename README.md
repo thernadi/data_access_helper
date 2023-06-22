@@ -1,11 +1,9 @@
 # DataAccessLayerHelper
 # DBRepository
 
-PHP Data Access Layer Helper & DataBase Repository
+Rasher PHP Data Access Layer Helper & DataBase Repository
 
-This package can run queries to access data from many databases via MySQLi or PDO extensions.
-
-It provides several classes that can connect to many databases and executes SQL queries to perform several types of data access to database tables.
+This package provides several classes that can connect to many kinds of databases and executes SQL queries to perform any type of data access (MySQLi, PDO) to database tables.
 
 Currently, it can:
 
