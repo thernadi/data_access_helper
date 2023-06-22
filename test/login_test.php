@@ -294,7 +294,7 @@ class LoginTest
 			//Adding Base_User UserRole
 			$settingValuesParamArrayArray = array();
 			$settingValuesParamArrayArray[] = array(new Param("Code", "ACTIVE"), new Param("Value", 1));
-			$settingValuesParamArrayArray[] = array(new Param("Code", "LOGLEVEL"), new Param("Value", 3));		
+			$settingValuesParamArrayArray[] = array(new Param("Code", "LOGLEVEL"), new Param("Value", 3));					
 			$newUser["UserRolesCollection"]->value[] = $this->getNewUserRoleCollectionItem("BASE_USER", $settingValuesParamArrayArray);
 
 			$this->dbUserRepository->save($newUser);
@@ -330,7 +330,8 @@ try
 
 	//Fill connectionData out before using
 	//$connectionData = new ConnectionData("localhost", "userName", "password", "test"); // use it with MySQLi extension
-	$connectionData = new ConnectionData("mysql:host=localhost;dbname=test", "userName", "password"); // use it with PDO extension
+	//$connectionData = new ConnectionData("mysql:host=localhost;dbname=test", "userName", "password"); // use it with PDO extension (MySQL)
+	$connectionData = new ConnectionData("sqlsrv:server=(local);Database=test","",""); //PDO MSSQL
 
 	//DbUserRoleRepository single instance
 	$dbUserRoleRepository = new DbUserRoleRepository($connectionData);

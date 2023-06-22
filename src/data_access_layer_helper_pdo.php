@@ -111,10 +111,13 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 		try
 		{
 			$this->open();
-			$result = $this->pdo->query($query, PDO::FETCH_ASSOC);
-			foreach($result as $row)
+			$result = $this->pdo->query($this->transformQueryToDBSpecific($query), PDO::FETCH_ASSOC);
+			if (str_contains($query, "SELECT"))
 			{
-				$returnValue[] = $row;
+				foreach($result as $row)
+				{
+					$returnValue[] = $row;
+				}
 			}
 			$this->close();
 		}
@@ -126,6 +129,25 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 		return $returnValue;
 	}
 	
+	/**
+	* transformQueryToDBSpecific function
+	* 
+	*
+	*/
+	public function transformQueryToDBSpecific($query)
+	{	
+		$returnValue = $query;
+		$driverName = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+		if ($driverName === "sqlsrv")//MSSQL SERVER
+		{
+			$reserved = array("User" => "[User]");
+			foreach($reserved as $key => $val)
+			{
+				$returnValue = preg_replace("/\b".$key."\b/", $val, $returnValue);
+			}
+		}
+		return $returnValue;
+	}
 
 	/**
 	* execute function
@@ -137,20 +159,26 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	*
 	* @return array @returnValue Return the result data set
 	*/
-
 	public function execute($query, $params, &$item = null)
 	{
 		$returnValue = array();
 		try
 		{
 			$this->open();
-			$stmt = $this->pdo->prepare($query);
+			$stmt = $this->pdo->prepare($this->transformQueryToDBSpecific($query));
 			for($i = 1; $i <= count($params); $i++)
 			{
 				$stmt->bindValue($i, $params[$i-1]->value, $params[$i-1]->type);
 			}
-			$stmt->execute();
-			$returnValue = $stmt->fetchAll(PDO::FETCH_ASSOC);
+			$stmt->execute();		
+			if (str_contains($query, "SELECT"))
+			{
+				foreach($stmt->fetchAll(PDO::FETCH_ASSOC) as $row)
+				{
+					$returnValue[] = $row;
+				}
+			}
+			
 			if (count($returnValue) === 0 && $item !== null)
 			{
 				$attributeItemId = ItemAttribute::getItemAttribute($item, "Id");
@@ -185,7 +213,7 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 		try
 		{
 			$this->open();
-			$stmt = $this->pdo->prepare($query);
+			$stmt = $this->pdo->prepare($this->transformQueryToDBSpecific($query));
 			for($i = 1; $i <= count($params); $i++)
 			{
 				$stmt->bindValue($i, $params[$i-1]->value, $params[$i-1]->type);
