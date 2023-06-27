@@ -112,7 +112,7 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 		{
 			$this->open();
 			$result = $this->pdo->query($this->transformQueryToDBSpecific($query), PDO::FETCH_ASSOC);
-			if (str_contains($query, "SELECT"))
+			if (str_starts_with(trim(strtoupper($query)), "SELECT"))
 			{
 				foreach($result as $row)
 				{
@@ -136,11 +136,11 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	*/
 	public function transformQueryToDBSpecific($query)
 	{	
-		$returnValue = $query;
+		$returnValue = strtoupper($query);
 		$driverName = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 		if ($driverName === "sqlsrv")//MSSQL SERVER
 		{
-			$reserved = array("User" => "[User]");
+			$reserved = array("USER" => "[USER]");
 			foreach($reserved as $key => $val)
 			{
 				$returnValue = preg_replace("/\b".$key."\b/", $val, $returnValue);
@@ -171,7 +171,7 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 				$stmt->bindValue($i, $params[$i-1]->value, $params[$i-1]->type);
 			}
 			$stmt->execute();		
-			if (str_contains($query, "SELECT"))
+			if (str_starts_with(trim(strtoupper($query)), "SELECT"))
 			{
 				foreach($stmt->fetchAll(PDO::FETCH_ASSOC) as $row)
 				{
