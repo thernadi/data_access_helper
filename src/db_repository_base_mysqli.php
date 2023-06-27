@@ -9,7 +9,7 @@
 //IsDeleted (boolean, default 0)
 
 namespace Rasher\Data\MySQLi\DataManagement;
-use Rasher\Data\DataManagement\{DbRepositoryBase};
+use Rasher\Data\DataManagement\{DbRepositoryBase,BindingParam};
 use Rasher\Data\Type\{DataType,ItemAttribute};
 
 include_once __DIR__."/data_access_layer_helper_mysqli.php";

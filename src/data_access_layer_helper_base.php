@@ -4,8 +4,25 @@
 //Current version: 2.26
 
 namespace Rasher\Data\DataManagement;
+use Rasher\Data\Type\{Param};
 
 !defined("LINE_SEPARATOR") && define("LINE_SEPARATOR", "\n\r"); //<br/>
+
+class BindingParam extends Param
+{
+	public $type = null;
+	
+	/**
+	* BindingParam constructor
+	* 
+	*
+	*/
+	public function __construct($name, $type, $value)
+	{
+		parent::__construct($name, $value);
+		$this->type = $type;
+	}
+}
 
 abstract class DataAccessLayerHelperBase
 {

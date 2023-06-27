@@ -4,7 +4,7 @@
 //Current version: 2.26
 
 namespace Rasher\Data\MySQLi\DataManagement;
-use Rasher\Data\DataManagement\{DataAccessLayerHelperBase};
+use Rasher\Data\DataManagement\{DataAccessLayerHelperBase,BindingParam};
 use Rasher\Data\Type\{Param,ItemAttribute};
 use Mysqli;
 
@@ -62,22 +62,6 @@ class StatementResult
 	public function get($columnName)
 	{
 		return $this->results[$columnName];
-	}
-}
-
-class BindingParam extends Param
-{
-	public $type = null; //i = integer, s = string, d = double, b = blob, (s = datetime) 
-	
-	/**
-	* BindingParam constructor
-	* 
-	*
-	*/
-	public function __construct($name, $type, $value)
-	{
-		parent::__construct($name, $value);
-		$this->type = $type;
 	}
 }
 

@@ -4,7 +4,7 @@
 //Current version: 2.26
 
 namespace Rasher\Data\PDO\DataManagement;
-use Rasher\Data\DataManagement\{DataAccessLayerHelperBase};
+use Rasher\Data\DataManagement\{DataAccessLayerHelperBase,BindingParam};
 use Rasher\Data\Type\{Param,ItemAttribute};
 use PDO;
 
@@ -31,22 +31,6 @@ class ConnectionData
 		$this->user = $user;
 		$this->psw = $psw;
 		$this->options = $options;
-	}
-}
-
-class BindingParam extends Param
-{
-	public $type = null;
-	
-	/**
-	* BindingParam constructor
-	* 
-	*
-	*/
-	public function __construct($name, $type, $value)
-	{
-		parent::__construct($name, $value);
-		$this->type = $type;
 	}
 }
 
