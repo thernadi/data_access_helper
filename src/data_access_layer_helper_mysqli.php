@@ -69,6 +69,7 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 {
 	private $mysqli = null;	
 	protected $connectionData = null;	
+	protected $isInTransaction = false;
 
 	/**
 	* DataAccessHelper constructor
@@ -87,7 +88,10 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	*/
 	private function open()
 	{
-		$this->init();
+		if (!$this->isInTransaction)
+		{
+			$this->init();
+		}	
 	}
 
 	/**
@@ -97,7 +101,10 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	*/
 	private function close()
 	{
-		$this->mysqli->close();
+		if (!$this->isInTransaction)
+		{
+			$this->mysqli->close();
+		}
 	}
 
 	/**
@@ -285,6 +292,27 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 			throw new \Exception(LINE_SEPARATOR."DAL Error!");
 		}
 		return $returnValue;
+	}
+
+	public function beginTransaction()
+	{		
+		$this->open();
+		$this->mysqli->begin_transaction();
+		$this->isInTransaction = true;
+	}
+
+	public function commitTransaction()
+	{
+		$this->mysqli->commit();
+		$this->isInTransaction = false;
+		$this->close();
+	}
+
+	public function rollbackTransaction()
+	{
+		$this->mysqli->rollback();
+		$this->isInTransaction = false;
+		$this->close();
 	}
 }
 

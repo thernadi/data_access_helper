@@ -20,107 +20,139 @@ class LoginTest
 
 	public function deleteUserData()
 	{
-		$this->dbUserRepository->deleteAll_User_UserRolesCollection_UserSettingsCollection();
-		$this->dbUserRepository->deleteAll_User_UserRolesCollection();
-		$this->dbUserRepository->deleteAll();
+		try
+		{	
+			$this->dbUserRepository->beginTransaction();
+			$this->dbUserRepository->deleteAll_User_UserRolesCollection_UserSettingsCollection();
+			$this->dbUserRepository->deleteAll_User_UserRolesCollection();
+			$this->dbUserRepository->deleteAll();
+			$this->dbUserRepository->commitTransaction();
+		}
+		catch (\Throwable $e)
+		{
+			$this->dbUserRepository->rollbackTransaction();
+			throw $e;
+		}
 	}
 
 	public function deleteUserRelatedBaseData()
 	{
-		$this->dbUserRepository->dbUserRoleRepository->deleteAll();
-		$this->dbUserRepository->dbUserSettingRepository->deleteAll();
+		try
+		{	
+			$this->dbUserRepository->beginTransaction();
+			$this->dbUserRepository->dbUserRoleRepository->deleteAll();
+			$this->dbUserRepository->dbUserSettingRepository->deleteAll();
+			$this->dbUserRepository->commitTransaction();
+		}
+		catch (\Throwable $e)
+		{
+			$this->dbUserRepository->rollbackTransaction();
+			throw $e;
+		}
 	}
 
 	public function createUserRelatedBaseData()
 	{
 		//UserRole
-		$filters = array();
-		$filters[] = new Param("IsDeleted", 0);
-		$filters[] = new Param("Code", "BASE_USER");
-		if (!$this->dbUserRepository->dbUserRoleRepository->checkItemInDB($filters, $item))
-		{
-			$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
-			$item["Code"]->value = "BASE_USER";
-			$item["Name"]->value = "Base user";
-			$this->dbUserRepository->dbUserRoleRepository->save($item);
-		}
+		try
+		{	
+			$this->dbUserRepository->beginTransaction();
 
-		$filters = array();
-		$filters[] = new Param("IsDeleted", 0);
-		$filters[] = new Param("Code", "GUEST");
-		if (!$this->dbUserRepository->dbUserRoleRepository->checkItemInDB($filters, $item))
-		{
-			$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
-			$item["Code"]->value = "GUEST";
-			$item["Name"]->value = "Guest";
-			$this->dbUserRepository->dbUserRoleRepository->save($item);
-		}
+			$filters = array();
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Code", "BASE_USER");
+			if (!$this->dbUserRepository->dbUserRoleRepository->checkItemInDB($filters, $item))
+			{
+				$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
+				$item["Code"]->value = "BASE_USER";
+				$item["Name"]->value = "Base user";
+				$this->dbUserRepository->dbUserRoleRepository->save($item);
+			}
+	
+			$filters = array();
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Code", "GUEST");
+			if (!$this->dbUserRepository->dbUserRoleRepository->checkItemInDB($filters, $item))
+			{
+				$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
+				$item["Code"]->value = "GUEST";
+				$item["Name"]->value = "Guest";
+				$this->dbUserRepository->dbUserRoleRepository->save($item);
+			}
+	
+			$filters = array();
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Code", "ADMIN");
+			if (!$this->dbUserRepository->dbUserRoleRepository->checkItemInDB($filters, $item))
+			{
+				$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
+				$item["Code"]->value = "ADMIN";
+				$item["Name"]->value = "Admin";
+				$this->dbUserRepository->dbUserRoleRepository->save($item);
+			}
+	
+			//UserSetting
+			$filters = array();
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Name", "ACTIVE");
+			if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
+			{
+				$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
+				$item["Name"]->value = "ACTIVE";
+				$item["DefaultValue"]->value = 0;
+				$this->dbUserRepository->dbUserSettingRepository->save($item);
+			}
+	
+			$filters = array();
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Name", "LOGLEVEL");
+			if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
+			{
+				$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
+				$item["Name"]->value = "LOGLEVEL";
+				$item["DefaultValue"]->value = 1;
+				$this->dbUserRepository->dbUserSettingRepository->save($item);
+			}
+	
+			$filters = array();
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Name", "ACCESS_READ");
+			if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
+			{
+				$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
+				$item["Name"]->value = "ACCESS_READ";
+				$item["DefaultValue"]->value = 0;
+				$this->dbUserRepository->dbUserSettingRepository->save($item);
+			}
+	
+			$filters = array();
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Name", "ACCESS_WRITE");
+			if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
+			{
+				$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
+				$item["Name"]->value = "ACCESS_WRITE";
+				$item["DefaultValue"]->value = 0;
+				$this->dbUserRepository->dbUserSettingRepository->save($item);
+			}
+	
+			$filters = array();
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Name", "ACCESS_DOWNLOAD");
+			if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
+			{
+				$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
+				$item["Name"]->value = "ACCESS_DOWNLOAD";
+				$item["DefaultValue"]->value = 0;
+				$this->dbUserRepository->dbUserSettingRepository->save($item);
+			}
 
-		$filters = array();
-		$filters[] = new Param("IsDeleted", 0);
-		$filters[] = new Param("Code", "ADMIN");
-		if (!$this->dbUserRepository->dbUserRoleRepository->checkItemInDB($filters, $item))
-		{
-			$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
-			$item["Code"]->value = "ADMIN";
-			$item["Name"]->value = "Admin";
-			$this->dbUserRepository->dbUserRoleRepository->save($item);
+			$this->dbUserRepository->commitTransaction();
 		}
-
-		//UserSetting
-		$filters = array();
-		$filters[] = new Param("IsDeleted", 0);
-		$filters[] = new Param("Name", "ACTIVE");
-		if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
+		catch (\Throwable $e)
 		{
-			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
-			$item["Name"]->value = "ACTIVE";
-			$item["DefaultValue"]->value = 0;
-			$this->dbUserRepository->dbUserSettingRepository->save($item);
-		}
-
-		$filters = array();
-		$filters[] = new Param("IsDeleted", 0);
-		$filters[] = new Param("Name", "LOGLEVEL");
-		if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
-		{
-			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
-			$item["Name"]->value = "LOGLEVEL";
-			$item["DefaultValue"]->value = 1;
-			$this->dbUserRepository->dbUserSettingRepository->save($item);
-		}
-
-		$filters = array();
-		$filters[] = new Param("IsDeleted", 0);
-		$filters[] = new Param("Name", "ACCESS_READ");
-		if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
-		{
-			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
-			$item["Name"]->value = "ACCESS_READ";
-			$item["DefaultValue"]->value = 0;
-			$this->dbUserRepository->dbUserSettingRepository->save($item);
-		}
-
-		$filters = array();
-		$filters[] = new Param("IsDeleted", 0);
-		$filters[] = new Param("Name", "ACCESS_WRITE");
-		if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
-		{
-			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
-			$item["Name"]->value = "ACCESS_WRITE";
-			$item["DefaultValue"]->value = 0;
-			$this->dbUserRepository->dbUserSettingRepository->save($item);
-		}
-
-		$filters = array();
-		$filters[] = new Param("IsDeleted", 0);
-		$filters[] = new Param("Name", "ACCESS_DOWNLOAD");
-		if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
-		{
-			$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
-			$item["Name"]->value = "ACCESS_DOWNLOAD";
-			$item["DefaultValue"]->value = 0;
-			$this->dbUserRepository->dbUserSettingRepository->save($item);
+			$this->dbUserRepository->rollbackTransaction();
+			throw $e;
 		}
 	}
 
@@ -138,7 +170,7 @@ class LoginTest
 			$this->userLogin = $this->userLogin[0];
 			$this->userLogin["IsLogged"]->value = 1;
 			$this->userLogin["LastLoginDateTime"]->value = $currentDate;
-			$this->dbUserRepository->save($this->userLogin);	
+			$this->dbUserRepository->saveWithTransaction($this->userLogin);	
 			$returnValue = true;
 			echo "Login success!".LINE_SEPARATOR;
 		}
@@ -154,7 +186,7 @@ class LoginTest
 		if ($this->userLogin !== null)
 		{			
 			$this->userLogin["IsLogged"]->value = 0;
-			$this->dbUserRepository->save($this->userLogin);	
+			$this->dbUserRepository->saveWithTransaction($this->userLogin);	
 			$this->userLogin = null;
 			echo "Logout success!".LINE_SEPARATOR;
 		}
@@ -165,7 +197,7 @@ class LoginTest
 		if ($this->userLogin !== null)
 		{
 			//We will load the user's all data
-			$user = $this->dbUserRepository->loadById($this->userLogin["Id"]->value); 
+			$user = $this->dbUserRepository->loadByIdWithTransaction($this->userLogin["Id"]->value); 
 			echo LINE_SEPARATOR;
 			echo "User:";
 			$this->dbUserRepository->writeOutSimpleData($user);
@@ -266,7 +298,7 @@ class LoginTest
 		$filters[] = new Param("LoginName", $loginName);		
 		if ($this->dbUserRepository->checkItemInDB($filters, $newUser))
 		{		
-			echo "User is already existed!".LINE_SEPARATOR;
+			echo "$loginName user is already existed!".LINE_SEPARATOR;
 		}
 		else
 		{
@@ -297,8 +329,8 @@ class LoginTest
 			$settingValuesParamArrayArray[] = array(new Param("Code", "LOGLEVEL"), new Param("Value", 3));					
 			$newUser["UserRolesCollection"]->value[] = $this->getNewUserRoleCollectionItem("BASE_USER", $settingValuesParamArrayArray);
 
-			$this->dbUserRepository->save($newUser);
-			echo "User registered!".LINE_SEPARATOR;
+			$this->dbUserRepository->saveWithTransaction($newUser);
+			echo "$loginName user registered!".LINE_SEPARATOR;
 		}
 	}
 
@@ -309,14 +341,14 @@ class LoginTest
 		$filters[] = new Param("LoginName", $loginName);		
 		if (!$this->dbUserRepository->checkItemInDB($filters, $currentUser))
 		{		
-			echo "User is not existed!".LINE_SEPARATOR;
+			echo "$loginName user is not existed!".LINE_SEPARATOR;
 		}
 		else
 		{
 			//We will load the user's all data
-			$currentUser = $this->dbUserRepository->loadById($currentUser[0]["Id"]->value); 
-			$this->dbUserRepository->delete($currentUser[0]);
-			echo "User deleted!".LINE_SEPARATOR;
+			$currentUser = $this->dbUserRepository->loadByIdWithTransaction($currentUser[0]["Id"]->value); 
+			$this->dbUserRepository->deleteWithTransaction($currentUser[0]);
+			echo "$loginName user deleted!".LINE_SEPARATOR;
 		}
 	}
 }
@@ -357,11 +389,11 @@ try
 	$loginTest->deleteUserRelatedBaseData(); //UserRole + UserSetting deleting
 
 	$loginTest->createUserRelatedBaseData(); //UserRole + UserSetting creating
-	$loginTest->registerNewUser("user1", "123");
-	$loginTest->login("user1", "123");
+	$loginTest->registerNewUser("user_1", "123");
+	$loginTest->login("user_1", "123");
 	$loginTest->showUserSomeData();
 	$loginTest->logout();
-	$loginTest->deleteUser("user1"); //physically delete
+	$loginTest->deleteUser("user_1"); //physically delete
 }
 catch(\Throwable $e)
 {

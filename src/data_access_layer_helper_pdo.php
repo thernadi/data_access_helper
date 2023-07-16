@@ -37,7 +37,8 @@ class ConnectionData
 class DataAccessLayerHelper extends DataAccessLayerHelperBase
 {
 	private $pdo = null;	
-	protected $connectionData = null;	
+	protected $connectionData = null;
+	protected $isInTransaction = false;
 
 	/**
 	* DataAccessHelper constructor
@@ -56,7 +57,10 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	*/
 	private function open()
 	{
-		$this->init();
+		if (!$this->isInTransaction)
+		{
+			$this->init();
+		}
 	}
 
 	/**
@@ -67,7 +71,10 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 
 	private function close()
 	{
-		$this->pdo = null;
+		if (!$this->isInTransaction)
+		{
+			$this->pdo = null;
+		}
 	}
 
 	/**
@@ -213,6 +220,27 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 			throw new \Exception(LINE_SEPARATOR."DAL Error!");
 		}
 		return $returnValue;
+	}
+
+	public function beginTransaction()
+	{
+		$this->open();
+		$this->pdo->beginTransaction();
+		$this->isInTransaction = true;
+	}
+
+	public function commitTransaction()
+	{
+		$this->pdo->commit();
+		$this->isInTransaction = false;
+		$this->close();
+	}
+
+	public function rollbackTransaction()
+	{
+		$this->pdo->rollBack();
+		$this->isInTransaction = false;
+		$this->close();
 	}
 	
 }

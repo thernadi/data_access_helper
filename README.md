@@ -17,9 +17,10 @@ Currently, it can:
 
 - Better data attribute's searching specially for collectionitem (DT_LIST)'s attributes
 
+- Transaction handling
+
 //LATER DEVELOPMENT PHASE
 - Filtering searching items with more relations via Param, FilterParam
-- Transaction handling
 - Caching
 - Historical data handling with DBHistoricalRepository
 - Datatable generation by the described attributes with foreign keys constraints.
