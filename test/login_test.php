@@ -39,14 +39,19 @@ class LoginTest
 	{
 		try
 		{	
-			$this->dbUserRepository->beginTransaction();
+			$this->dbUserRepository->dbUserRoleRepository->beginTransaction();
+			$this->dbUserRepository->dbUserSettingRepository->beginTransaction();
+
 			$this->dbUserRepository->dbUserRoleRepository->deleteAll();
 			$this->dbUserRepository->dbUserSettingRepository->deleteAll();
-			$this->dbUserRepository->commitTransaction();
+
+			$this->dbUserRepository->dbUserRoleRepository->commitTransaction();
+			$this->dbUserRepository->dbUserSettingRepository->commitTransaction();
 		}
 		catch (\Throwable $e)
 		{
-			$this->dbUserRepository->rollbackTransaction();
+			$this->dbUserRepository->dbUserRoleRepository->rollbackTransaction();
+			$this->dbUserRepository->dbUserSettingRepository->rollbackTransaction();
 			throw $e;
 		}
 	}
@@ -56,7 +61,8 @@ class LoginTest
 		//UserRole
 		try
 		{	
-			$this->dbUserRepository->beginTransaction();
+			$this->dbUserRepository->dbUserRoleRepository->beginTransaction();
+			$this->dbUserRepository->dbUserSettingRepository->beginTransaction();
 
 			$filters = array();
 			$filters[] = new Param("IsDeleted", 0);
@@ -147,11 +153,13 @@ class LoginTest
 				$this->dbUserRepository->dbUserSettingRepository->save($item);
 			}
 
-			$this->dbUserRepository->commitTransaction();
+			$this->dbUserRepository->dbUserRoleRepository->commitTransaction();
+			$this->dbUserRepository->dbUserSettingRepository->commitTransaction();
 		}
 		catch (\Throwable $e)
 		{
-			$this->dbUserRepository->rollbackTransaction();
+			$this->dbUserRepository->dbUserRoleRepository->rollbackTransaction();
+			$this->dbUserRepository->dbUserSettingRepository->rollbackTransaction();
 			throw $e;
 		}
 	}
