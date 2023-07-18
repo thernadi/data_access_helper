@@ -370,6 +370,53 @@ trait DbRepositoryBase
 		}
 	}
 
+	public function saveWithTransaction($item) 
+	{
+		try
+		{
+			$this->beginTransaction();
+			$this->save($item);
+			$this->commitTransaction();
+		}
+		catch (\Throwable $e)
+		{
+			$this->rollbackTransaction();
+			throw $e;
+		}
+	}
+
+	public function loadByIdWithTransaction($id)
+	{
+		$returnValue = null;
+		try
+		{
+			$this->beginTransaction();
+			$returnValue = $this->loadById($id);
+			$this->commitTransaction();
+		}
+		catch (\Throwable $e)
+		{
+			$this->rollbackTransaction();
+			throw $e;
+		}		
+		return $returnValue;
+	}
+
+	public function deleteWithTransaction($item)
+	{
+		try
+		{
+			$this->beginTransaction();
+			$this->delete($item);
+			$this->commitTransaction();
+		}
+		catch (\Throwable $e)
+		{
+			$this->rollbackTransaction();
+			throw $e;
+		}
+	}
+
 	//$name: attribute name
 	//$value: search value	
 	//$items: ItemAttribute array
