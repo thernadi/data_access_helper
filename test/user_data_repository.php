@@ -17,7 +17,7 @@ class DbUserRepository extends DbRepository
 	public $dbUserSettingRepository = null;
 	public $dbUserRoleRepository = null;
 
-	public function __construct($connectionData, $dbUserSettingRepository, $dbUserRoleRepository)
+	public function __construct($connectionData, $dbUserSettingRepository, $dbUserRoleRepository, $useItemCache = false, $saveItemCacheBack = false, $cacheIdProperty = "Id")
 	{
 		$this->dbUserSettingRepository = $dbUserSettingRepository;
 		$this->dbUserRoleRepository = $dbUserRoleRepository;
@@ -31,7 +31,7 @@ class DbUserRepository extends DbRepository
 			ItemAttribute::with_Name_Caption_DataType_DefaultValue("IsDeleted", "Is deleted", DataType::DT_INT, 0),		
 			ItemAttribute::with_Name_Caption_DataType("DefaultUserRole", "Default user role", DataType::DT_ITEM),
 			ItemAttribute::with_Name_Caption_DataType("UserRolesCollection", "User roles collection", DataType::DT_LIST));
-		parent::__construct($connectionData, "User", $itemAttributes);
+		parent::__construct($connectionData, "User", $itemAttributes, $useItemCache, $saveItemCacheBack, $cacheIdProperty);
 
 		$ItemAttribute = ItemAttribute::getItemAttribute($this->itemAttributes, "UserRolesCollection");
 		$ItemAttribute->setReferenceDescriptor(new ReferenceDescriptor("User", "User_UserRolesCollection", $this->itemAttributes, $this->getUserUserRolesCollectionItemAttributes(), "Id", "User"));

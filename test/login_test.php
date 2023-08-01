@@ -374,9 +374,12 @@ try
 	$connectionData = new ConnectionData("sqlsrv:server=(local);Database=test","",""); //PDO MSSQL
 
 	//DbUserRoleRepository single instance
-	$dbUserRoleRepository = new DbUserRoleRepository($connectionData);
+	$dbUserRoleRepository = new DbUserRoleRepository($connectionData, true, false, "Code");
+	$userRole_BaseUser = $dbUserRoleRepository->getCacheItem("GUEST")[0];
+	echo $userRole_BaseUser["Name"]->value.LINE_SEPARATOR;
+
 	//DbUserSettingRepository single instance
-	$dbUserSettingRepository = new DbUserSettingRepository($connectionData);
+	$dbUserSettingRepository = new DbUserSettingRepository($connectionData, true, false, "Code");
 	//DbUserRepository single instance
 	$dbUserRepository = new DbUserRepository($connectionData, $dbUserSettingRepository, $dbUserRoleRepository);
 

@@ -19,9 +19,10 @@ Currently, it can:
 
 - Transaction handling
 
+- Simple caching
+
 //LATER DEVELOPMENT PHASE
 - Filtering searching items with more relations via Param, FilterParam
-- Caching
 - Historical data handling with DBHistoricalRepository
 - Datatable generation by the described attributes with foreign keys constraints.
 - Merging of ItemAttribute collections

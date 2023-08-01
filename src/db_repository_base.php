@@ -1,10 +1,10 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
 //Db Repository Base
-//Current version: 2.26
+//Current version: 2.33
 
 namespace Rasher\Data\DataManagement;
-use Rasher\Data\Type\{DataType,LogicalOperator,Param,FilterParam,ReferenceDescriptor,ItemAttribute};
+use Rasher\Data\Type\{DataType,LogicalOperator,Param,FilterParam,ReferenceDescriptor,ItemAttribute,CacheItem};
 use Rasher\Common\{Common};
 
 include_once __DIR__."/data_type_helper.php";
@@ -15,12 +15,97 @@ trait DbRepositoryBase
 {
 	protected $tbl = null;
 	public $itemAttributes = null; //ItemAttribute object array without values, it is only the data structure
+	protected $useItemCache = null;
+	protected $saveItemCacheBack = null;
+	protected $cacheIdProperty = null;
+	protected $itemCache = null;
 
-	public function __construct($connectionData, $tbl, $itemAttributes)
+
+	public function __construct($connectionData, $tbl, $itemAttributes, $useItemCache = false, $saveItemCacheBack = false, $cacheIdProperty = "Id")
 	{
 		parent::__construct($connectionData);
 		$this->tbl = $tbl;
 		$this->itemAttributes = $itemAttributes;
+		$this->useItemCache = $useItemCache;
+		$this->saveItemCacheBack = $saveItemCacheBack;
+		$this->cacheIdProperty = $cacheIdProperty;
+		if ($this->useItemCache)
+		{
+			$this->buildCache();
+		}
+	}
+
+	public function __destruct() 
+	{
+		if ($this->saveItemCacheBack)
+		{
+			$this->saveCache();
+		}
+	}
+
+	//Load from DB
+	private function buildCache()
+	{
+		$this->itemCache = array();
+		foreach ($this->loadAll() as $item) 
+		{
+			$this->addCacheItem(new CacheItem($item));
+		}
+	}
+
+	//Save to DB
+	private function saveCache()
+	{
+		foreach ($this->itemCache as $cacheItem) 
+		{
+			$this->saveWithTransaction($cacheItem->item);
+		}
+	}
+
+	private function addCacheItem($cacheItem)
+	{
+		$id = $cacheItem->item[$this->cacheIdProperty]->value;
+		if(!array_key_exists($id, $this->itemCache))
+		{
+			$this->itemCache[$id] = $cacheItem;
+		}	
+	}
+
+	public function getCacheItem($id)
+	{
+		$returnValue = null;
+		if(array_key_exists($id, $this->itemCache))
+		{
+			if (!$this->itemCache[$id]->isFullyLoaded)
+			{
+				$returnValue = $this->loadByIdWithTransaction($this->itemCache[$id]->item["Id"]->value);
+			}
+		}
+		else
+		{
+			if ($this->cacheIdProperty === "Id")
+			{
+				$returnValue = $this->loadByIdWithTransaction($id);
+			}
+			else
+			{
+				$filters = array();
+				$filters[] = new Param($this->cacheIdProperty, $id);		
+				$item = $this->loadByFilter2($filters);
+				if(isset($item) && count($item) > 0)
+				{
+					$returnValue = $this->loadByIdWithTransaction($item["Id"]->value);
+				}
+			}		
+		}	
+		
+		if(isset($returnValue) && count($returnValue) > 0)
+		{		
+			$this->itemCache[$id]->item = $returnValue;
+			$this->itemCache[$id]->isFullyLoaded = true;			
+		}
+		
+		return $returnValue;
 	}
 
 	public function getMinField($fieldName)
@@ -212,11 +297,11 @@ trait DbRepositoryBase
 				$query .= $orderField.", ";
 			$query = substr($query, 0, strlen($query) - 2);
 			
-			$orderDirection = strtolower($orderDirection);
-			if ($orderDirection != null && ($orderDirection === "asc" || $orderDirection === "desc"))
+			$orderDirection = strtoupper($orderDirection);
+			if ($orderDirection != null && ($orderDirection === "ASC" || $orderDirection === "DESC"))
 				$query .=" ".$orderDirection;
 			else
-				$query .=" asc";
+				$query .=" ASC";
 		}
 	
 		$returnValue = $this->execute($query, $this->convertParamArrayToDBSpecificParamArray($filters));
@@ -227,7 +312,7 @@ trait DbRepositoryBase
 	//$filters: Param object array
 	public function loadByFilter2($filters)
 	{	
-		return $this->loadByFilter($filters, array(), array("Id"), "asc");
+		return $this->loadByFilter($filters, array(), array("Id"), "ASC");
 	}
 
 	//This function can load one item by "Id" with the type of "DT_ITEM" item together and the "DT_LIST" are loaded. 

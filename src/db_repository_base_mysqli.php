@@ -1,7 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
 //Db Repository for access MySQL Database using MySQLi extension
-//Current version: 2.26
+//Current version: 2.33
 
 //Database table rules: all table contains the fields belows in database.
 //Table level existed columns:

@@ -1,7 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
 //Data Type Helper
-//Current version: 2.26
+//Current version: 2.33
 
 namespace Rasher\Data\Type;
 
@@ -85,6 +85,16 @@ class ReferenceDescriptor
 		$this->targetItemAttributes = $targetItemAttributes;			
 		$this->sourceMappingAttributeName = $sourceMappingAttributeName;	
 		$this->targetMappingAttributeName = $targetMappingAttributeName;
+	}
+}
+
+class CacheItem
+{
+	public $item = null;
+	public $isFullyLoaded = false;
+	public function __construct($item)
+	{
+		$this->item = $item;
 	}
 }
 

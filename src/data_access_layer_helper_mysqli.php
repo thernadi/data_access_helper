@@ -1,7 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
 //Data Access Layer Helper for access MySQL Database using MySQLi extension
-//Current version: 2.26
+//Current version: 2.33
 
 namespace Rasher\Data\MySQLi\DataManagement;
 use Rasher\Data\DataManagement\{DataAccessLayerHelperBase,BindingParam};
