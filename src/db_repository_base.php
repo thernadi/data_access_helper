@@ -82,6 +82,10 @@ trait DbRepositoryBase
 				{
 					$returnValue = $this->loadByIdWithTransaction($this->itemCache[$id]->item["Id"]->value);
 				}
+				else
+				{
+					$returnValue = $this->itemCache[$id]->item;
+				}
 			}
 			else
 			{

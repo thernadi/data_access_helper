@@ -404,6 +404,7 @@ try
 	$dbUserSettingRepository->buildCache();
 	echo "Using cache:".LINE_SEPARATOR;
 	$userSetting_cacheItem = $dbUserSettingRepository->getCacheItem("ACTIVE")[0];
+	$userSetting_cacheItem = $dbUserSettingRepository->getCacheItem("ACTIVE")[0];
 	echo $userSetting_cacheItem["Name"]->value.LINE_SEPARATOR;
 	$userRole_cacheItem = $dbUserRoleRepository->getCacheItem("GUEST")[0];
 	echo $userRole_cacheItem["Name"]->value.LINE_SEPARATOR;
