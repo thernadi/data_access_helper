@@ -375,11 +375,9 @@ try
 
 	//DbUserRoleRepository single instance
 	$dbUserRoleRepository = new DbUserRoleRepository($connectionData, true, false, "Code");
-	$userRole_BaseUser = $dbUserRoleRepository->getCacheItem("GUEST")[0];
-	echo $userRole_BaseUser["Name"]->value.LINE_SEPARATOR;
-
+	
 	//DbUserSettingRepository single instance
-	$dbUserSettingRepository = new DbUserSettingRepository($connectionData, true, false, "Code");
+	$dbUserSettingRepository = new DbUserSettingRepository($connectionData, true, false, "Name");
 	//DbUserRepository single instance
 	$dbUserRepository = new DbUserRepository($connectionData, $dbUserSettingRepository, $dbUserRoleRepository);
 
@@ -400,6 +398,17 @@ try
 	$loginTest->deleteUserRelatedBaseData(); //UserRole + UserSetting deleting
 
 	$loginTest->createUserRelatedBaseData(); //UserRole + UserSetting creating
+	
+	//Build cache
+	$dbUserRoleRepository->buildCache();
+	$dbUserSettingRepository->buildCache();
+	echo "Using cache:".LINE_SEPARATOR;
+	$userSetting_cacheItem = $dbUserSettingRepository->getCacheItem("ACTIVE")[0];
+	echo $userSetting_cacheItem["Name"]->value.LINE_SEPARATOR;
+	$userRole_cacheItem = $dbUserRoleRepository->getCacheItem("GUEST")[0];
+	echo $userRole_cacheItem["Name"]->value.LINE_SEPARATOR;
+	echo LINE_SEPARATOR;
+
 	$loginTest->registerNewUser("user_1", "123");
 	$loginTest->login("user_1", "123");
 	$loginTest->showUserSomeData();

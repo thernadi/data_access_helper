@@ -29,10 +29,7 @@ trait DbRepositoryBase
 		$this->useItemCache = $useItemCache;
 		$this->saveItemCacheBack = $saveItemCacheBack;
 		$this->cacheIdProperty = $cacheIdProperty;
-		if ($this->useItemCache)
-		{
-			$this->buildCache();
-		}
+		$this->buildCache();		
 	}
 
 	public function __destruct() 
@@ -44,12 +41,15 @@ trait DbRepositoryBase
 	}
 
 	//Load from DB
-	private function buildCache()
+	public function buildCache()
 	{
 		$this->itemCache = array();
-		foreach ($this->loadAll() as $item) 
+		if ($this->useItemCache)
 		{
-			$this->addCacheItem(new CacheItem($item));
+			foreach ($this->loadAll() as $item) 
+			{
+				$this->addCacheItem(new CacheItem($item));
+			}
 		}
 	}
 
