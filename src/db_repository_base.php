@@ -34,10 +34,16 @@ trait DbRepositoryBase
 
 	public function __destruct() 
 	{
-		if ($this->saveItemCacheBack)
+		$this->saveCache();
+	}
+
+	private function addCacheItem($cacheItem)
+	{
+		$id = $cacheItem->item[$this->cacheIdProperty]->value;
+		if(!array_key_exists($id, $this->itemCache))
 		{
-			$this->saveCache();
-		}
+			$this->itemCache[$id] = $cacheItem;
+		}	
 	}
 
 	//Load from DB
@@ -54,57 +60,53 @@ trait DbRepositoryBase
 	}
 
 	//Save to DB
-	private function saveCache()
+	public function saveCache()
 	{
-		foreach ($this->itemCache as $cacheItem) 
+		if ($this->saveItemCacheBack && $this->useItemCache)
 		{
-			$this->saveWithTransaction($cacheItem->item);
+			foreach ($this->itemCache as $cacheItem) 
+			{
+				$this->saveWithTransaction($cacheItem->item);
+			}
 		}
-	}
-
-	private function addCacheItem($cacheItem)
-	{
-		$id = $cacheItem->item[$this->cacheIdProperty]->value;
-		if(!array_key_exists($id, $this->itemCache))
-		{
-			$this->itemCache[$id] = $cacheItem;
-		}	
 	}
 
 	public function getCacheItem($id)
 	{
 		$returnValue = null;
-		if(array_key_exists($id, $this->itemCache))
+		if ($this->useItemCache)
 		{
-			if (!$this->itemCache[$id]->isFullyLoaded)
+			if(array_key_exists($id, $this->itemCache))
 			{
-				$returnValue = $this->loadByIdWithTransaction($this->itemCache[$id]->item["Id"]->value);
-			}
-		}
-		else
-		{
-			if ($this->cacheIdProperty === "Id")
-			{
-				$returnValue = $this->loadByIdWithTransaction($id);
+				if (!$this->itemCache[$id]->isFullyLoaded)
+				{
+					$returnValue = $this->loadByIdWithTransaction($this->itemCache[$id]->item["Id"]->value);
+				}
 			}
 			else
 			{
-				$filters = array();
-				$filters[] = new Param($this->cacheIdProperty, $id);		
-				$item = $this->loadByFilter2($filters);
-				if(isset($item) && count($item) > 0)
+				if ($this->cacheIdProperty === "Id")
 				{
-					$returnValue = $this->loadByIdWithTransaction($item["Id"]->value);
+					$returnValue = $this->loadByIdWithTransaction($id);
 				}
-			}		
-		}	
-		
-		if(isset($returnValue) && count($returnValue) > 0)
-		{		
-			$this->itemCache[$id]->item = $returnValue;
-			$this->itemCache[$id]->isFullyLoaded = true;			
+				else
+				{
+					$filters = array();
+					$filters[] = new Param($this->cacheIdProperty, $id);		
+					$item = $this->loadByFilter2($filters);
+					if(isset($item) && count($item) > 0)
+					{
+						$returnValue = $this->loadByIdWithTransaction($item["Id"]->value);
+					}
+				}		
+			}	
+			
+			if(isset($returnValue) && count($returnValue) > 0)
+			{		
+				$this->itemCache[$id]->item = $returnValue;
+				$this->itemCache[$id]->isFullyLoaded = true;			
+			}
 		}
-		
 		return $returnValue;
 	}
 
