@@ -19,7 +19,9 @@ Currently, it can:
 
 - Transaction handling
 
-- Simple caching
+- Caching: buildCache->addItemToCache->getItemFromCache->saveCache
+
+- Repository can manage changing values of repository items. (hasChanges) 
 
 //LATER DEVELOPMENT PHASE
 - Filtering searching items with more relations via Param, FilterParam

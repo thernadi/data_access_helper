@@ -3,7 +3,7 @@ namespace Rasher\Test;
 use Rasher\Data\PDO\DataManagement\{ConnectionData}; //PDO extension
 //use Rasher\Data\MySQLi\DataManagement\{ConnectionData}; //MySQLi extension
 use Rasher\Data\UserManagement\{DbUserSettingRepository,DbUserRoleRepository,DbUserRepository};
-use Rasher\Data\Type\{LogicalOperator,Param,FilterParam,ItemAttribute};
+use Rasher\Data\Type\{LogicalOperator,Param,FilterParam,ItemAttribute,CachedItem};
 use Rasher\Common\{Common};
 
 include_once __DIR__."/user_data_repository.php";
@@ -374,10 +374,10 @@ try
 	$connectionData = new ConnectionData("sqlsrv:server=(local);Database=test","",""); //PDO MSSQL
 
 	//DbUserRoleRepository single instance
-	$dbUserRoleRepository = new DbUserRoleRepository($connectionData, true, false, "Code");
+	$dbUserRoleRepository = new DbUserRoleRepository($connectionData, true, "Code");
 	
 	//DbUserSettingRepository single instance
-	$dbUserSettingRepository = new DbUserSettingRepository($connectionData, true, false, "Name");
+	$dbUserSettingRepository = new DbUserSettingRepository($connectionData, true, "Name");
 	//DbUserRepository single instance
 	$dbUserRepository = new DbUserRepository($connectionData, $dbUserSettingRepository, $dbUserRoleRepository);
 
@@ -402,13 +402,20 @@ try
 	//Build cache
 	$dbUserRoleRepository->buildCache();
 	$dbUserSettingRepository->buildCache();
-	echo "Using cache:".LINE_SEPARATOR;
-	$userSetting_cacheItem = $dbUserSettingRepository->getCacheItem("ACTIVE")[0];
-	$userSetting_cacheItem = $dbUserSettingRepository->getCacheItem("ACTIVE")[0];
-	echo $userSetting_cacheItem["Name"]->value.LINE_SEPARATOR;
-	$userRole_cacheItem = $dbUserRoleRepository->getCacheItem("GUEST")[0];
-	echo $userRole_cacheItem["Name"]->value.LINE_SEPARATOR;
+	echo "Using cached items:".LINE_SEPARATOR;
+	$userSettingItem = $dbUserSettingRepository->getItemFromCache("ACTIVE")[0];
+	$userSettingItem = $dbUserSettingRepository->getItemFromCache("ACTIVE")[0];
+	echo $userSettingItem["Name"]->value.LINE_SEPARATOR;
+	$userRoleItem = $dbUserRoleRepository->getItemFromCache("GUEST")[0];
+	echo $userRoleItem["Name"]->value.LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
+
+	//Add and save new usersetting itemCache
+	$userSettingItem = $dbUserSettingRepository->getNewItemInstance();
+	$userSettingItem["Name"]->value = "TEST";
+	$userSettingItem["DefaultValue"]->value = "TEST";
+	$dbUserSettingRepository->addItemToCache($userSettingItem);
+	$dbUserSettingRepository->saveCache();
 
 	$loginTest->registerNewUser("user_1", "123");
 	$loginTest->login("user_1", "123");

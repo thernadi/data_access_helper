@@ -4,7 +4,7 @@
 //Current version: 2.33
 
 namespace Rasher\Data\DataManagement;
-use Rasher\Data\Type\{DataType,LogicalOperator,Param,FilterParam,ReferenceDescriptor,ItemAttribute,CacheItem};
+use Rasher\Data\Type\{DataType,LogicalOperator,Param,FilterParam,ReferenceDescriptor,ItemAttribute,CachedItem};
 use Rasher\Common\{Common};
 
 include_once __DIR__."/data_type_helper.php";
@@ -13,48 +13,50 @@ include_once __DIR__."/common_static_helper.php";
 //ABSTRACT
 trait DbRepositoryBase
 {
-	protected $tbl = null;
 	public $itemAttributes = null; //ItemAttribute object array without values, it is only the data structure
+	protected $tbl = null;
 	protected $useItemCache = null;
-	protected $saveItemCacheBack = null;
 	protected $cacheIdProperty = null;
 	protected $itemCache = null;
 
 
-	public function __construct($connectionData, $tbl, $itemAttributes, $useItemCache = false, $saveItemCacheBack = false, $cacheIdProperty = "Id")
+	public function __construct($connectionData, $tbl, $itemAttributes, $useItemCache = false, $cacheIdProperty = "Id")
 	{
 		parent::__construct($connectionData);
 		$this->tbl = $tbl;
 		$this->itemAttributes = $itemAttributes;
 		$this->useItemCache = $useItemCache;
-		$this->saveItemCacheBack = $saveItemCacheBack;
 		$this->cacheIdProperty = $cacheIdProperty;
 		$this->buildCache();		
 	}
 
 	public function __destruct() 
 	{
-		$this->saveCache();
-	}
-
-	private function addCacheItem($cacheItem)
-	{
-		$id = $cacheItem->item[$this->cacheIdProperty]->value;
-		if(!array_key_exists($id, $this->itemCache))
+		if(isset($this->itemCache))
 		{
-			$this->itemCache[$id] = $cacheItem;
-		}	
+			if (!isset($_SESSION["DBRepositoryCache_".$this->tbl]))
+			{	
+				$_SESSION["DBRepositoryCache_".$this->tbl] = json_encode($this->itemCache);
+			}
+		}
 	}
 
-	//Load from DB
-	public function buildCache()
+	//Load from DB or session if exists and needed
+	public function buildCache($reloadFromDB = true)
 	{
-		$this->itemCache = array();
 		if ($this->useItemCache)
 		{
-			foreach ($this->loadAll() as $item) 
+			$this->itemCache = array();
+			if (!$reloadFromDB && isset($_SESSION["DBRepositoryCache_".$this->tbl]))
+			{	
+				$this->itemCache = json_decode($_SESSION["DBRepositoryCache_".$this->tbl]); 
+			}
+			else
 			{
-				$this->addCacheItem(new CacheItem($item));
+				foreach ($this->loadAll() as $item) 
+				{
+					$this->addItemToCache($item);
+				}
 			}
 		}
 	}
@@ -62,19 +64,35 @@ trait DbRepositoryBase
 	//Save to DB
 	public function saveCache()
 	{
-		if ($this->saveItemCacheBack && $this->useItemCache)
+		if(isset($this->itemCache) && count($this->itemCache) > 0)
 		{
-			foreach ($this->itemCache as $cacheItem) 
+			foreach ($this->itemCache as $cachedItem) 
 			{
-				$this->saveWithTransaction($cacheItem->item);
+				if ($this->hasChanges($cachedItem->item))
+				{
+					$this->saveWithTransaction($cachedItem->item);
+				}
 			}
 		}
 	}
 
-	public function getCacheItem($id)
+	public function addItemToCache($item)
+	{
+		if(isset($this->itemCache))
+		{
+			$cachedItem = new CachedItem($item);
+			$id = $cachedItem->item[$this->cacheIdProperty]->value;
+			if(!array_key_exists($id, $this->itemCache))
+			{
+				$this->itemCache[$id] = $cachedItem;
+			}	
+		}
+	}
+
+	public function getItemFromCache($id)
 	{
 		$returnValue = null;
-		if ($this->useItemCache)
+		if(isset($this->itemCache) && count($this->itemCache) > 0)
 		{
 			if(array_key_exists($id, $this->itemCache))
 			{
@@ -114,6 +132,35 @@ trait DbRepositoryBase
 		return $returnValue;
 	}
 
+	public function hasChanges($item)
+	{
+		$returnValue = false;
+		foreach($item as $key => $value) 
+		{
+			if ($value->dataType != DataType::DT_LIST)
+			{
+				if ($value->value !== $value->originalValue)
+				{
+					$returnValue = true;
+					break;
+				}
+			} 
+			else if ($value->referenceDescriptor !== null) //DT_LIST
+			{
+				foreach($value->value as $collectionItemKey => $collectionItemValue)
+				{
+					if ($this->hasChanges($collectionItemValue))
+					{
+						$returnValue = true;
+						break;
+					}
+				}
+			}	
+		}
+		return $returnValue;
+	}
+
+
 	public function getMinField($fieldName)
 	{
 		$query = "SELECT DISTINCT MIN(".$fieldName.") FROM ". $this->tbl . " WHERE IsDeleted = ?";
@@ -150,7 +197,7 @@ trait DbRepositoryBase
 		{
 			if ($val->value === null && $val->defaultValue !== null)
 			{
-				$val->value = $val->defaultValue;
+				$val->value = $val->convertToBaseType($val->defaultValue);
 			}
 		}		
 		return $returnValue;		
@@ -177,7 +224,13 @@ trait DbRepositoryBase
 					if ($itemAttribute->dataType !== DataType::DT_LIST 
 					&& $itemAttribute->dataType !== DataType::DT_ITEM)
 					{
-						$itemAttribute->value = $val;
+						$itemAttribute->value = $itemAttribute->convertToBaseType($val);
+
+						if ($itemAttribute->originalValue === null)
+						{
+							$itemAttribute->originalValue = $itemAttribute->value;
+						}
+
 					}
 					else if ($itemAttribute->referenceDescriptor !== null 
 					&& $itemAttribute->dataType === DataType::DT_ITEM)
@@ -186,7 +239,12 @@ trait DbRepositoryBase
 						if ($itemAttribute->value !== null)
 						{
 							$itemAttributeId = ItemAttribute::getItemAttribute($itemAttribute->value, $itemAttribute->referenceDescriptor->targetMappingAttributeName);
-							$itemAttributeId->value = $val;
+							$itemAttributeId->value = $itemAttributeId->convertToBaseType($val);
+
+							if ($itemAttributeId->originalValue === null)
+							{
+								$itemAttributeId->originalValue = $itemAttributeId->value;
+							}
 						}
 					}
 				}

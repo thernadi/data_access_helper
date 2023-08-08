@@ -88,7 +88,7 @@ class ReferenceDescriptor
 	}
 }
 
-class CacheItem
+class CachedItem
 {
 	public $item = null;
 	public $isFullyLoaded = false;
@@ -100,6 +100,7 @@ class CacheItem
 
 class ItemAttribute
 {
+	public $originalValue = null;
 	public $name = null;
 	public $caption = null;
 	public $dataType = null;
@@ -282,6 +283,29 @@ class ItemAttribute
 		return $returnValue;
 	}
 	
+	public function convertToBaseType($value)
+	{
+		$returnValue = $value;
+		switch ($this->dataType)
+		{
+			case DataType::DT_FLOAT:
+				$returnValue = (float)$value;
+				break;
+			case DataType::DT_DOUBLE:
+				$returnValue = (double)$value;
+				break;
+			case DataType::DT_INT:
+				$returnValue = (int)$value;
+				break;		
+			case DataType::DT_BOOL:
+				$returnValue = (bool)$value;
+				break;				
+			default:
+				$returnValue = $value;
+		}
+		return $returnValue;
+	}
+
 	public function convertedValue($value)
 	{
 		$returnValue = $value;
