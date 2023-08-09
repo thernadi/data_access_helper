@@ -250,16 +250,26 @@ class ItemAttribute
 		}
 		else
 		{
-			if (count($itemAttributes) > 0 
-			&& is_object($itemAttributes[array_keys($itemAttributes)[0]]))
+			if (count($itemAttributes) > 0)
 			{
-				foreach($itemAttributes as $key => $val) 
-				{		
-					if($val->name === $attributeName)
-					{
-						$returnValue = $val;
-						break;
-					}			
+				if (is_object($itemAttributes[array_keys($itemAttributes)[0]]))
+				{
+					foreach($itemAttributes as $key => $val) 
+					{		
+						if($val->name === $attributeName)
+						{
+							$returnValue = $val;
+							break;
+						}			
+					}
+				}
+				else if (is_array($itemAttributes))
+				{
+					$returnValue = array();
+					foreach($itemAttributes as $val)
+					{	
+						$returnValue[] = ItemAttribute::getItemAttribute($val, $attributeName);
+					}
 				}
 			}
 		}		

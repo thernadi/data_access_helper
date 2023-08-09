@@ -17,7 +17,7 @@ trait DbRepositoryBase
 	protected $tbl = null;
 	protected $useItemCache = null;
 	protected $cacheIdProperty = null;
-	protected $itemCache = null;
+	protected  $itemCache = null;
 
 
 	public function __construct($connectionData, $tbl, $itemAttributes, $useItemCache = false, $cacheIdProperty = "Id")
@@ -70,9 +70,29 @@ trait DbRepositoryBase
 			{
 				if ($this->hasChanges($cachedItem->item))
 				{
+					$id = $cachedItem->item["Id"]->value;
+					if ($id < 0)
+					{
+						continue;	
+					}
 					$this->saveWithTransaction($cachedItem->item);
 				}
 			}
+
+			$i = -1;
+			while ($i < 0)
+			{
+				if (!array_key_exists($i, $this->itemCache))
+				{
+					break;
+				}
+				$this->saveWithTransaction($this->itemCache[$i]->item);
+				$this->addItemToCache($this->itemCache[$i]->item);
+				unset($this->itemCache[$i]);
+
+				$i--;
+			}
+
 		}
 	}
 
@@ -80,12 +100,46 @@ trait DbRepositoryBase
 	{
 		if(isset($this->itemCache))
 		{
-			$cachedItem = new CachedItem($item);
-			$id = $cachedItem->item[$this->cacheIdProperty]->value;
-			if(!array_key_exists($id, $this->itemCache))
+			if (isset($item))
+			{
+				$cachedItem = new CachedItem($item);
+				$id = $cachedItem->item[$this->cacheIdProperty]->value;
+				if ($this->cacheIdProperty === "Id")
+				{
+					if ($item["Id"]->value === null)
+					{
+						$item["Id"]->value = -1;
+						if (count($this->itemCache) > 0)
+						{
+							$itemIds = array();
+							foreach ($this->itemCache as $cachedItemWithId) 
+							{	
+								$itemIds[] = $cachedItemWithId->item["Id"]->value; 
+							}
+							sort($itemIds);
+							if ($itemIds[0] < 0)
+							{
+								$item["Id"]->value = $itemIds[0] - 1;
+							}
+						}
+						$id = $item["Id"]->value;
+					}
+				}
+			}
+			
+			if($id < 0)
+			{
+				$newItemCache = array($id => $cachedItem);
+				foreach($this->itemCache as $key => $value)
+				{
+					$newItemCache[$key] = $value;
+				}
+				$this->itemCache = $newItemCache;
+			}
+			else if (!array_key_exists($id, $this->itemCache))
 			{
 				$this->itemCache[$id] = $cachedItem;
-			}	
+			}
 		}
 	}
 
@@ -96,9 +150,14 @@ trait DbRepositoryBase
 		{
 			if(array_key_exists($id, $this->itemCache))
 			{
-				if (!$this->itemCache[$id]->isFullyLoaded)
+				if (!$this->itemCache[$id]->isFullyLoaded 
+				&& $this->itemCache[$id]->item["Id"]->value > 0)
 				{
-					$returnValue = $this->loadByIdWithTransaction($this->itemCache[$id]->item["Id"]->value);
+					$returnValue = $this->loadByIdWithTransaction($this->itemCache[$id]->item["Id"]->value)[0];
+					if(isset($returnValue) && count($returnValue) > 0)
+					{		
+						$this->itemCache[$id]->isFullyLoaded = true;		
+					}
 				}
 				else
 				{
@@ -109,7 +168,11 @@ trait DbRepositoryBase
 			{
 				if ($this->cacheIdProperty === "Id")
 				{
-					$returnValue = $this->loadByIdWithTransaction($id);
+					$returnValue = $this->loadByIdWithTransaction($id)[0];
+					if(isset($returnValue) && count($returnValue) > 0)
+					{		
+						$this->itemCache[$id]->isFullyLoaded = true;		
+					}
 				}
 				else
 				{
@@ -118,16 +181,20 @@ trait DbRepositoryBase
 					$item = $this->loadByFilter2($filters);
 					if(isset($item) && count($item) > 0)
 					{
-						$returnValue = $this->loadByIdWithTransaction($item["Id"]->value);
+						$returnValue = $this->loadByIdWithTransaction($item["Id"]->value)[0];
+						if(isset($returnValue) && count($returnValue) > 0)
+						{		
+							$this->itemCache[$id]->isFullyLoaded = true;		
+						}
 					}
 				}		
 			}	
 			
 			if(isset($returnValue) && count($returnValue) > 0)
 			{		
-				$this->itemCache[$id]->item = $returnValue;
-				$this->itemCache[$id]->isFullyLoaded = true;			
+				$this->itemCache[$id]->item = $returnValue;	
 			}
+
 		}
 		return $returnValue;
 	}
@@ -137,7 +204,7 @@ trait DbRepositoryBase
 		$returnValue = false;
 		foreach($item as $key => $value) 
 		{
-			if ($value->dataType != DataType::DT_LIST)
+			if ($value->dataType !== DataType::DT_LIST)
 			{
 				if ($value->value !== $value->originalValue)
 				{
@@ -245,6 +312,11 @@ trait DbRepositoryBase
 							{
 								$itemAttributeId->originalValue = $itemAttributeId->value;
 							}
+						}
+
+						if ($itemAttribute->originalValue === null)
+						{
+							$itemAttribute->originalValue = $itemAttribute->value;
 						}
 					}
 				}

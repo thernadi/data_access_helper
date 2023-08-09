@@ -233,7 +233,7 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 			if (count($returnValue) === 0 && $item !== null)
 			{
 				$attributeItemId = ItemAttribute::getItemAttribute($item, "Id");
-				if ($attributeItemId->value === null)
+				if ($attributeItemId->value === null || $attributeItemId->value < 0)
 				{
 					$attributeItemId->value = $this->mysqli->insert_id;
 				}

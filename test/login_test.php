@@ -374,10 +374,10 @@ try
 	$connectionData = new ConnectionData("sqlsrv:server=(local);Database=test","",""); //PDO MSSQL
 
 	//DbUserRoleRepository single instance
-	$dbUserRoleRepository = new DbUserRoleRepository($connectionData, true, "Code");
+	$dbUserRoleRepository = new DbUserRoleRepository($connectionData, true, "Code"); //Caching by Code
 	
 	//DbUserSettingRepository single instance
-	$dbUserSettingRepository = new DbUserSettingRepository($connectionData, true, "Name");
+	$dbUserSettingRepository = new DbUserSettingRepository($connectionData, true, "Name"); //Caching by Name
 	//DbUserRepository single instance
 	$dbUserRepository = new DbUserRepository($connectionData, $dbUserSettingRepository, $dbUserRoleRepository);
 
@@ -400,24 +400,41 @@ try
 	$loginTest->createUserRelatedBaseData(); //UserRole + UserSetting creating
 	
 	//Build cache
+	echo "Using cached items:".LINE_SEPARATOR;
 	$dbUserRoleRepository->buildCache();
 	$dbUserSettingRepository->buildCache();
-	echo "Using cached items:".LINE_SEPARATOR;
-	$userSettingItem = $dbUserSettingRepository->getItemFromCache("ACTIVE")[0];
-	$userSettingItem = $dbUserSettingRepository->getItemFromCache("ACTIVE")[0];
-	echo $userSettingItem["Name"]->value.LINE_SEPARATOR;
-	$userRoleItem = $dbUserRoleRepository->getItemFromCache("GUEST")[0];
+
+	$userRoleItem = $dbUserRoleRepository->getItemFromCache("GUEST");
+	echo LINE_SEPARATOR;
 	echo $userRoleItem["Name"]->value.LINE_SEPARATOR;
+	$userSettingItem = $dbUserSettingRepository->getItemFromCache("ACTIVE");
+	echo $userSettingItem["Name"]->value.LINE_SEPARATOR;
+
+	//Add new usersetting items to itemCache
+	$userSettingItem = $dbUserSettingRepository->getNewItemInstance();
+	$userSettingItem["Name"]->value = "TEST1";
+	$userSettingItem["DefaultValue"]->value = "TEST1";
+	$dbUserSettingRepository->addItemToCache($userSettingItem);
+	$userSettingItem = $dbUserSettingRepository->getItemFromCache("TEST1");
+	echo $userSettingItem["Name"]->value."(Id: ".$userSettingItem["Id"]->value.")".LINE_SEPARATOR;
+
+	$userSettingItem = $dbUserSettingRepository->getNewItemInstance();
+	$userSettingItem["Name"]->value = "TEST2";
+	$userSettingItem["DefaultValue"]->value = "TEST2";
+	$dbUserSettingRepository->addItemToCache($userSettingItem);
+	$userSettingItem = $dbUserSettingRepository->getItemFromCache("TEST2");
+	echo $userSettingItem["Name"]->value."(Id: ".$userSettingItem["Id"]->value.")".LINE_SEPARATOR;
+	
+	//Save new usersetting items to DB
+	$dbUserSettingRepository->saveCache();
+	
+	$userSettingItem = $dbUserSettingRepository->getItemFromCache("TEST1");
+	echo $userSettingItem["Name"]->value."(Id: ".$userSettingItem["Id"]->value.")".LINE_SEPARATOR;
+	$userSettingItem = $dbUserSettingRepository->getItemFromCache("TEST2");
+	echo $userSettingItem["Name"]->value."(Id: ".$userSettingItem["Id"]->value.")".LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
-	//Add and save new usersetting itemCache
-	$userSettingItem = $dbUserSettingRepository->getNewItemInstance();
-	$userSettingItem["Name"]->value = "TEST";
-	$userSettingItem["DefaultValue"]->value = "TEST";
-	$dbUserSettingRepository->addItemToCache($userSettingItem);
-	$dbUserSettingRepository->saveCache();
-
-	$loginTest->registerNewUser("user_1", "123");
+	$loginTest->registerNewUser("user_1", "123");	
 	$loginTest->login("user_1", "123");
 	$loginTest->showUserSomeData();
 	$loginTest->logout();
