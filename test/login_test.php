@@ -401,8 +401,8 @@ try
 	
 	//Build cache
 	echo "Using cached items:".LINE_SEPARATOR;
-	$dbUserRoleRepository->buildCache();
-	$dbUserSettingRepository->buildCache();
+	$dbUserRoleRepository->buildCache(true);
+	$dbUserSettingRepository->buildCache(true);
 
 	$userRoleItem = $dbUserRoleRepository->getItemFromCache("GUEST");
 	echo LINE_SEPARATOR;

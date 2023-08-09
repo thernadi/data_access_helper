@@ -27,7 +27,7 @@ trait DbRepositoryBase
 		$this->itemAttributes = $itemAttributes;
 		$this->useItemCache = $useItemCache;
 		$this->cacheIdProperty = $cacheIdProperty;
-		$this->buildCache();		
+		$this->buildCache(true);		
 	}
 
 	public function __destruct() 
@@ -42,7 +42,7 @@ trait DbRepositoryBase
 	}
 
 	//Load from DB or session if exists and needed
-	public function buildCache($reloadFromDB = true)
+	public function buildCache($reloadFromDB = false)
 	{
 		if ($this->useItemCache)
 		{
