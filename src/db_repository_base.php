@@ -181,7 +181,7 @@ trait DbRepositoryBase
 					$item = $this->loadByFilter2($filters);
 					if(isset($item) && count($item) > 0)
 					{
-						$returnValue = $this->loadByIdWithTransaction($item["Id"]->value)[0];
+						$returnValue = $this->loadByIdWithTransaction($item[0]["Id"]->value)[0];
 						if(isset($returnValue) && count($returnValue) > 0)
 						{		
 							$this->itemCache[$id]->isFullyLoaded = true;		
@@ -202,27 +202,35 @@ trait DbRepositoryBase
 	public function hasChanges($item)
 	{
 		$returnValue = false;
-		foreach($item as $key => $value) 
+
+		if ($item["Id"]->value === null || $item["Id"]->value < 0)
 		{
-			if ($value->dataType !== DataType::DT_LIST)
+			$returnValue = true;
+		}
+		else 
+		{
+			foreach($item as $key => $value) 
 			{
-				if ($value->value !== $value->originalValue)
+				if ($value->dataType !== DataType::DT_LIST)
 				{
-					$returnValue = true;
-					break;
-				}
-			} 
-			else if ($value->referenceDescriptor !== null) //DT_LIST
-			{
-				foreach($value->value as $collectionItemKey => $collectionItemValue)
-				{
-					if ($this->hasChanges($collectionItemValue))
+					if ($value->value !== $value->originalValue)
 					{
 						$returnValue = true;
 						break;
 					}
-				}
-			}	
+				} 
+				else if ($value->referenceDescriptor !== null) //DT_LIST
+				{
+					foreach($value->value as $collectionItemKey => $collectionItemValue)
+					{
+						if ($this->hasChanges($collectionItemValue))
+						{
+							$returnValue = true;
+							break;
+						}
+					}
+				}	
+			}
 		}
 		return $returnValue;
 	}
@@ -494,52 +502,55 @@ trait DbRepositoryBase
 	//$item: ItemAttribute array	
 	public function save($item, $tbl = null) 
 	{
-		$params = $this->getParamsByItem($item);		
-
-		if ($tbl === null)
+		if ($this->hasChanges($item))
 		{
-			$tbl = $this->tbl;
-		}
+			$params = $this->getParamsByItem($item);		
 
-		$itemAttributeId = ItemAttribute::getItemAttribute($item, "Id");
-	
-		$q_fnames = "";
-		$q_fparams = "";
-		if ($itemAttributeId->value > 0) //UPDATE
-		{
-			foreach ($params as $param)
+			if ($tbl === null)
 			{
-				$q_fnames .= $param->name." = ?, ";
+				$tbl = $this->tbl;
 			}
-			$q_fnames = substr($q_fnames, 0, strlen($q_fnames) - 2);
-			$params[] = new Param("Id", $itemAttributeId->value);
-			$query = "UPDATE ". $tbl ." SET ".$q_fnames." WHERE Id = ?";
-			$this->execute($query, $this->convertParamArrayToDBSpecificParamArray($params, $item));
-		}
-		else //INSERT
-		{
-			foreach ($params as $param)
-			{
-				$q_fnames .= $param->name.", ";
-				$q_fparams .="?, ";
-			}
-			$q_fnames = substr($q_fnames, 0, strlen($q_fnames) - 2);
-			$q_fparams = substr($q_fparams, 0, strlen($q_fparams) - 2);
-			$query = "INSERT INTO ". $tbl ." (".$q_fnames.") VALUES (".$q_fparams.")";
-			$this->execute($query, $this->convertParamArrayToDBSpecificParamArray($params, $item), $item);
-		}
 
-		foreach($item as $key => $value)
-		{
-			if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_LIST)
+			$itemAttributeId = ItemAttribute::getItemAttribute($item, "Id");
+		
+			$q_fnames = "";
+			$q_fparams = "";
+			if ($itemAttributeId->value > 0) //UPDATE
 			{
-				foreach($value->value as $collectionItemKey => $collectionItemValue)
+				foreach ($params as $param)
 				{
-					$itemCollectionReferenceAttribute = ItemAttribute::getItemAttribute($collectionItemValue, $value->referenceDescriptor->targetMappingAttributeName);
-					$itemCollectionReferenceAttribute->value = $itemAttributeId->value;
-					$this->save($collectionItemValue, $value->referenceDescriptor->targetTableName);
+					$q_fnames .= $param->name." = ?, ";
 				}
-			}	
+				$q_fnames = substr($q_fnames, 0, strlen($q_fnames) - 2);
+				$params[] = new Param("Id", $itemAttributeId->value);
+				$query = "UPDATE ". $tbl ." SET ".$q_fnames." WHERE Id = ?";
+				$this->execute($query, $this->convertParamArrayToDBSpecificParamArray($params, $item));
+			}
+			else //INSERT
+			{
+				foreach ($params as $param)
+				{
+					$q_fnames .= $param->name.", ";
+					$q_fparams .="?, ";
+				}
+				$q_fnames = substr($q_fnames, 0, strlen($q_fnames) - 2);
+				$q_fparams = substr($q_fparams, 0, strlen($q_fparams) - 2);
+				$query = "INSERT INTO ". $tbl ." (".$q_fnames.") VALUES (".$q_fparams.")";
+				$this->execute($query, $this->convertParamArrayToDBSpecificParamArray($params, $item), $item);
+			}
+
+			foreach($item as $key => $value)
+			{
+				if ($value->referenceDescriptor !== null && $value->dataType == DataType::DT_LIST)
+				{
+					foreach($value->value as $collectionItemKey => $collectionItemValue)
+					{
+						$itemCollectionReferenceAttribute = ItemAttribute::getItemAttribute($collectionItemValue, $value->referenceDescriptor->targetMappingAttributeName);
+						$itemCollectionReferenceAttribute->value = $itemAttributeId->value;
+						$this->save($collectionItemValue, $value->referenceDescriptor->targetTableName);
+					}
+				}	
+			}
 		}	
 	}
 	
