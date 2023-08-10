@@ -34,10 +34,7 @@ trait DbRepositoryBase
 	{
 		if(isset($this->itemCache))
 		{
-			if (!isset($_SESSION["DBRepositoryCache_".$this->tbl]))
-			{	
-				$_SESSION["DBRepositoryCache_".$this->tbl] = json_encode($this->itemCache);
-			}
+			$_SESSION["DBRepositoryCache_".$this->tbl] = json_encode($this->itemCache);
 		}
 	}
 

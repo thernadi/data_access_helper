@@ -3,7 +3,7 @@ namespace Rasher\Test;
 use Rasher\Data\PDO\DataManagement\{ConnectionData}; //PDO extension
 //use Rasher\Data\MySQLi\DataManagement\{ConnectionData}; //MySQLi extension
 use Rasher\Data\UserManagement\{DbUserSettingRepository,DbUserRoleRepository,DbUserRepository};
-use Rasher\Data\Type\{LogicalOperator,Param,FilterParam,ItemAttribute,CachedItem};
+use Rasher\Data\Type\{LogicalOperator,Param,FilterParam,ItemAttribute};
 use Rasher\Common\{Common};
 
 include_once __DIR__."/user_data_repository.php";

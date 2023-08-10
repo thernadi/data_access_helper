@@ -25,8 +25,8 @@ Currently, it can:
 
 //LATER DEVELOPMENT PHASE
 - Filtering searching items with more relations via Param, FilterParam
-- Historical data handling with DBHistoricalRepository
 - Datatable generation by the described attributes with foreign keys constraints.
-- Merging of ItemAttribute collections
+- Historical data handling with DBHistoricalRepository
+
 - Better function and parameters description
 - Documentation
