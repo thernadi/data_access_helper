@@ -1,7 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
 //Db Repository for access MySQL Database using MySQLi extension
-//Current version: 2.33
+//Current version: 2.35
 
 //Database table rules: all table contains the fields belows in database.
 //Table level existed columns:
@@ -35,21 +35,21 @@ abstract class DbRepository extends DataAccessLayerHelper
 			$bindingType = "";		
 			switch ($attr->dataType) 
 			{
-			case DataType::DT_DATETIME:
-			case DataType::DT_TIMESTAMP:
-				$bindingType = "s";
-				break;
-			case DataType::DT_FLOAT:
-			case DataType::DT_DOUBLE:
-				$bindingType = "d";
-				break;
-			case DataType::DT_ITEM:	
-			case DataType::DT_INT:
-			case DataType::DT_BOOL:
-				$bindingType = "i";
-				break;
-			default:
-				$bindingType = "s";
+				case DataType::DT_DATETIME:
+				case DataType::DT_TIMESTAMP:
+					$bindingType = "s";
+					break;
+				case DataType::DT_FLOAT:
+				case DataType::DT_DOUBLE:
+					$bindingType = "d";
+					break;
+				case DataType::DT_ITEM:	
+				case DataType::DT_INT:
+				case DataType::DT_BOOL:
+					$bindingType = "i";
+					break;
+				default:
+					$bindingType = "s";
 			}
 
 			$returnValue[] = new BindingParam($param->name, $bindingType, $param->value);

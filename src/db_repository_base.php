@@ -1,10 +1,10 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
 //Db Repository Base
-//Current version: 2.33
+//Current version: 2.35
 
 namespace Rasher\Data\DataManagement;
-use Rasher\Data\Type\{DataType,LogicalOperator,Param,FilterParam,ReferenceDescriptor,ItemAttribute,CachedItem};
+use Rasher\Data\Type\{DataType,LogicalOperator,Operator,Param,FilterParam,ReferenceDescriptor,ItemAttribute,CachedItem};
 use Rasher\Common\{Common};
 
 include_once __DIR__."/data_type_helper.php";
@@ -140,6 +140,16 @@ trait DbRepositoryBase
 		}
 	}
 
+	public function getAllItemsFromCache()
+	{
+		$returnValue = array();
+		foreach($this->itemCache as $cachedItem)
+		{
+			$returnValue[] = $cachedItem->item;
+		}
+		return $returnValue;
+	}
+
 	public function getItemFromCache($id)
 	{
 		$returnValue = null;
@@ -176,11 +186,29 @@ trait DbRepositoryBase
 					$filters = array();
 					$filters[] = new Param($this->cacheIdProperty, $id);		
 					$item = $this->loadByFilter2($filters);
+					$outputItem = null;
 					if(isset($item) && count($item) > 0)
 					{
-						$returnValue = $this->loadByIdWithTransaction($item[0]["Id"]->value)[0];
-						if(isset($returnValue) && count($returnValue) > 0)
-						{		
+						$hasComplexAttribute = false;
+						foreach($this->itemAttributes as $itemAttribute)
+						{
+							if ($itemAttribute->dataType === DataType::DT_ITEM || $itemAttribute->dataType === DataType::DT_LIST)
+							{
+								$hasComplexAttribute = true;
+								break;
+							}
+						}
+
+						if ($hasComplexAttribute)
+						{
+							$returnValue = $this->loadByIdWithTransaction($item[0]["Id"]->value)[0];
+							if(isset($returnValue) && count($returnValue) > 0)
+							{		
+								$this->itemCache[$id]->isFullyLoaded = true;		
+							}						
+						}
+						else
+						{
 							$this->itemCache[$id]->isFullyLoaded = true;		
 						}
 					}
@@ -425,7 +453,15 @@ trait DbRepositoryBase
 			$query .=" WHERE ";
 			foreach ($filters as $filter)
 			{
-				$query .= $filter->name." LIKE ? AND ";
+			 	$operator = Operator::getOperatorForDB($filter->operator);
+				if ($operator !== Operator::OP_IS_NULL)
+				{
+					$query .= $filter->name." $operator ? AND ";
+				}
+				else
+				{
+					$query .= $filter->name." $operator AND ";
+				}	
 			}
 			$query = substr($query, 0, strlen($query) - 4);
 		}
@@ -653,6 +689,7 @@ trait DbRepositoryBase
 	{
 		$outputItem = null;
 		$returnValue = false;
+		
 		foreach ($items as $item)
 		{			
 			$itemAttribute = ItemAttribute::getItemAttribute($item, $name);
@@ -698,12 +735,12 @@ trait DbRepositoryBase
 						if ($itemAttribute->dataType !== DataType::DT_LIST 
 							&& $itemAttribute->dataType !== DataType::DT_ITEM)
 						{
-							echo $itemAttribute->name." : ".$itemAttribute->convertedValue($itemAttribute->value).LINE_SEPARATOR;
+							echo $itemAttribute->name." : ".$itemAttribute->value.LINE_SEPARATOR;
 						}
 						else if ($itemAttribute->dataType === DataType::DT_ITEM)
 						{
 							$itemAttributeId = ItemAttribute::getItemAttribute($itemAttribute->value, "Id");
-							echo $itemAttribute->name." : ".$itemAttribute->convertedValue($itemAttributeId->value).LINE_SEPARATOR;
+							echo $itemAttribute->name." : ".$itemAttributeId->value.LINE_SEPARATOR;
 						}
 					}
 				}
@@ -735,50 +772,52 @@ trait DbRepositoryBase
 			$match = 0;
 			foreach($filterParam->paramArray as $param)
 			{			   
-			$itemAttribute = ItemAttribute::getItemAttribute($item, $param->name);
-			
-			if ($itemAttribute !== null)
-			{
-				if ($itemAttribute->value === $param->value)
+				$itemAttribute = ItemAttribute::getItemAttribute($item, $param->name);
+				if ($itemAttribute !== null)				
 				{
-					$match++;				   
+					$paramValue = $param->value;
+					$attributeValue = $itemAttribute->value; 
+					
+					$pattern = str_replace('%', '.*', preg_quote($paramValue));
+					if (($param->operator === Operator::OP_EQUAL && $attributeValue === $paramValue)
+						|| ($param->operator === Operator::OP_NOT_EQUAL && $attributeValue !== $paramValue)
+						|| ($param->operator === Operator::OP_LESS_THAN && $attributeValue < $paramValue)
+						|| ($param->operator === Operator::OP_LESS_THAN_OR_EQUAL && $attributeValue <= $paramValue)
+						|| ($param->operator === Operator::OP_GREATER_THAN && $attributeValue > $paramValue)
+						|| ($param->operator === Operator::OP_GREATER_THAN_OR_EQUAL && $attributeValue >= $paramValue)
+						|| ($param->operator === Operator::OP_LIKE && preg_match("/^$pattern$/", $attributeValue))
+					)						
+					{
+						$match++;				   
+					}			   
+				}
+				
+				if ($matchByOneParameter)
+				{
+					break;
 				}			   
-			}
-			
-			if ($matchByOneParameter)
-			{
-				break;
-			}			   
 			}
 			
 			if (!$matchByOneParameter)
 			{
 				if (($filterParam->logicalOperator === LogicalOperator::LO_OR && $match > 0) || $filterParam->logicalOperator === LogicalOperator::LO_AND && $match === count($filterParam->paramArray))
 				{
-					if (!$firstMatch)
+					$returnValue[] = $item;				
+					if ($firstMatch)
 					{
-						$returnValue[] = $item;			
-					}	
-					else
-					{
-						$returnValue = $item;
-						break;				
-					}					
+						break;
+					}
 				}
 			}
 			else 
 			{
 				if ($match > 0)
 				{
-					if (!$firstMatch)
+					$returnValue[] = $item;		
+					if ($firstMatch)
 					{
-						$returnValue[] = $item;			
+						break;
 					}	
-					else
-					{
-						$returnValue = $item;
-						break;				
-					}		
 				}
 			}
 		}	

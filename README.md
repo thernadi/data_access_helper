@@ -19,13 +19,12 @@ Currently, it can:
 
 - Transaction handling
 
-- Caching: buildCache->addItemToCache->getItemFromCache->saveCache
+- Caching the database query results
 
-- Repository can manage changing values of repository items. (hasChanges) 
+- Filtering searching items with more relations via Param, FilterParam
 
 //LATER DEVELOPMENT PHASE
-- Filtering searching items with more relations via Param, FilterParam
-- Datatable generation by the described attributes with foreign keys constraints.
+- Database table script generation by the described attributes with foreign keys constraints.
 - Historical data handling with DBHistoricalRepository
 
 - Better function and parameters description

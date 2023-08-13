@@ -1,7 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
 //Db Repository for access Databases using PDO extension
-//Current version: 2.33
+//Current version: 2.35
 
 //Database table rules: all table contains the fields belows in database.
 //Table level existed columns:
@@ -36,24 +36,24 @@ abstract class DbRepository extends DataAccessLayerHelper
 			$bindingType = "";		
 			switch ($attr->dataType) 
 			{
-			case DataType::DT_DATETIME:
-			case DataType::DT_TIMESTAMP:
-			case DataType::DT_FLOAT:
-			case DataType::DT_DOUBLE:
-				$bindingType = PDO::PARAM_STR;
-				break;
-			case DataType::DT_ITEM:	
-			case DataType::DT_INT:
-				$bindingType = PDO::PARAM_INT;
-				break;
-			case DataType::DT_BOOL:
-				$bindingType = PDO::PARAM_BOOL;
-				break;
-			case DataType::DT_BLOB:
-				$bindingType = PDO::PARAM_LOB;
-				break;
-			default:
-				$bindingType = PDO::PARAM_STR;
+				case DataType::DT_DATETIME:
+				case DataType::DT_TIMESTAMP:
+				case DataType::DT_FLOAT:
+				case DataType::DT_DOUBLE:
+					$bindingType = PDO::PARAM_STR;
+					break;
+				case DataType::DT_ITEM:	
+				case DataType::DT_INT:
+					$bindingType = PDO::PARAM_INT;
+					break;
+				case DataType::DT_BOOL:
+					$bindingType = PDO::PARAM_BOOL;
+					break;
+				case DataType::DT_BLOB:
+					$bindingType = PDO::PARAM_LOB;
+					break;
+				default:
+					$bindingType = PDO::PARAM_STR;
 			}
 
 			$returnValue[] = new BindingParam($param->name, $bindingType, $param->value);

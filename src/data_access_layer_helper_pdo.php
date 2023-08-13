@@ -1,7 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
 //Data Access Layer Helper for access Databases using PDO extension
-//Current version: 2.33
+//Current version: 2.35
 
 namespace Rasher\Data\PDO\DataManagement;
 use Rasher\Data\DataManagement\{DataAccessLayerHelperBase,BindingParam};

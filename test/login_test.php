@@ -3,7 +3,7 @@ namespace Rasher\Test;
 use Rasher\Data\PDO\DataManagement\{ConnectionData}; //PDO extension
 //use Rasher\Data\MySQLi\DataManagement\{ConnectionData}; //MySQLi extension
 use Rasher\Data\UserManagement\{DbUserSettingRepository,DbUserRoleRepository,DbUserRepository};
-use Rasher\Data\Type\{LogicalOperator,Param,FilterParam,ItemAttribute};
+use Rasher\Data\Type\{LogicalOperator,Param,FilterParam,Operator,ItemAttribute};
 use Rasher\Common\{Common};
 
 include_once __DIR__."/user_data_repository.php";
@@ -379,7 +379,7 @@ try
 	//DbUserSettingRepository single instance
 	$dbUserSettingRepository = new DbUserSettingRepository($connectionData, true, "Name"); //Caching by Name
 	//DbUserRepository single instance
-	$dbUserRepository = new DbUserRepository($connectionData, $dbUserSettingRepository, $dbUserRoleRepository);
+	$dbUserRepository = new DbUserRepository($connectionData, $dbUserSettingRepository, $dbUserRoleRepository, true);
 
 	$loginTest = new LoginTest($dbUserRepository);
 	//Comment out if you want to modify this class for several times!
@@ -434,10 +434,40 @@ try
 	echo $userSettingItem["Name"]->value."(Id: ".$userSettingItem["Id"]->value.")".LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
-	$loginTest->registerNewUser("user_1", "123");	
+	//Find test #1
+	echo "Finding item test #1";
+	echo LINE_SEPARATOR;
+	$param = array();
+	$param[] = new Param("Name","Gues%", Operator::OP_LIKE);
+	$param[] = new Param("Name","%ase%", Operator::OP_LIKE);
+	$filterParam = new FilterParam($param, LogicalOperator::LO_OR);
+	$foundItems = $dbUserRoleRepository->find($dbUserRoleRepository->getAllItemsFromCache(), $filterParam, false); 
+	echo "count: ".count($foundItems);
+	echo LINE_SEPARATOR;
+	echo LINE_SEPARATOR;
+
+	$loginTest->registerNewUser("user_1", "123");
 	$loginTest->login("user_1", "123");
 	$loginTest->showUserSomeData();
 	$loginTest->logout();
+
+	echo LINE_SEPARATOR;
+	echo LINE_SEPARATOR;
+
+	//Find test #2
+	$dbUserRepository->buildCache(true);
+	echo "Finding item test #2";
+	echo LINE_SEPARATOR;
+	$param = array();
+	$param[] = new Param("LastLoginDateTime", date('Y-m-d H:i:s', strtotime("2024-08-08")), Operator::OP_LESS_THAN);
+	$filterParam = new FilterParam($param);
+	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(), $filterParam, false); 
+	echo "count: ".count($foundItems);
+
+	echo LINE_SEPARATOR;
+	echo LINE_SEPARATOR;
+
+
 	$loginTest->deleteUser("user_1"); //physically delete
 }
 catch(\Throwable $e)

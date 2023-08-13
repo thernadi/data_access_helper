@@ -1,7 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
 //Data Access Layer Helper Base for access Databases
-//Current version: 2.33
+//Current version: 2.35
 
 namespace Rasher\Data\DataManagement;
 use Rasher\Data\Type\{Param};

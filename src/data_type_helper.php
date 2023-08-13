@@ -1,7 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
 //Data Type Helper
-//Current version: 2.33
+//Current version: 2.35
 
 namespace Rasher\Data\Type;
 
@@ -21,6 +21,54 @@ abstract class DataType
 	const DT_BLOB = 12;
 }
 
+class Operator
+{
+	const OP_EQUAL = 1;
+	const OP_NOT_EQUAL = 2;	
+	const OP_LESS_THAN = 3;
+	const OP_LESS_THAN_OR_EQUAL = 4;
+	const OP_GREATER_THAN = 5;
+	const OP_GREATER_THAN_OR_EQUAL = 6;
+	const OP_LIKE = 8; //the joker character is %
+	const OP_IS_NULL = 7; //DB specific only
+
+	public static function getOperatorForDB($operator)
+	{
+		$returnValue = null;
+		switch ($operator) 
+		{
+			case Operator::OP_EQUAL:
+				$returnValue = "=";
+				break;
+			case Operator::OP_NOT_EQUAL:
+				$returnValue = "<>";
+				break;				
+			case Operator::OP_LESS_THAN:
+				$returnValue = "<";
+				break;					
+			case Operator::OP_LESS_THAN_OR_EQUAL:
+				$returnValue = "<=";
+				break;					
+			case Operator::OP_GREATER_THAN:
+				$returnValue = ">";
+				break;					
+			case Operator::OP_GREATER_THAN_OR_EQUAL:
+				$returnValue = ">=";
+				break;				
+			case Operator::OP_LIKE:
+				$returnValue = "LIKE";
+				break;		
+			case Operator::OP_IS_NULL:
+				$returnValue = "IS NULL";
+				break;						
+			default:
+				$returnValue = "=";					
+		}
+		return $returnValue;
+	}
+}
+
+
 abstract class LogicalOperator
 {
 	const LO_OR = 1;
@@ -32,11 +80,13 @@ class Param
 {
 	public $name = null;
 	public $value = null;
+	public $operator = null;
 	
-	public function __construct($name, $value)
+	public function __construct($name, $value, $operator = Operator::OP_EQUAL)
 	{
 		$this->name = $name;
 		$this->value = $value;
+		$this->operator = $operator;
 	}
 	
 	public static function getParam($name, $paramArray)
@@ -272,8 +322,11 @@ class ItemAttribute
 					}
 				}
 			}
-		}		
-		$returnValue = ItemAttribute::eliminateOutterArray($returnValue);
+		}
+		if ($returnValue !== null)
+		{		
+			$returnValue = ItemAttribute::eliminateOutterArray($returnValue);
+		}
 		return $returnValue;		
 	}
 
@@ -295,9 +348,33 @@ class ItemAttribute
 	
 	public function convertToBaseType($value)
 	{
+		$dateFormat = $this->dataFormat;
+		if($dateFormat === null)
+		{
+			$dateFormat = "Y-m-d H:i:s";
+		}
+
 		$returnValue = $value;
 		switch ($this->dataType)
 		{
+			case DataType::DT_DATETIME_ORIGINAL: //Not DB
+				$date = strtotime($value);
+				$returnValue = $date;
+				break;
+			case DataType::DT_TIMESTAMP_ORIGINAL: //Not DB
+				$date = date_create();
+				date_timestamp_set($date, $value);
+				$returnValue = $date;
+				break;		
+			case DataType::DT_DATETIME:		
+				$date = strtotime($value);
+				$returnValue = date($dateFormat, $date);
+				break;
+			case DataType::DT_TIMESTAMP:
+				$date = date_create();
+				date_timestamp_set($date, $value);
+				$returnValue = date_format($date, $dateFormat);
+				break;								
 			case DataType::DT_FLOAT:
 				$returnValue = (float)$value;
 				break;
@@ -316,51 +393,5 @@ class ItemAttribute
 		return $returnValue;
 	}
 
-	public function convertedValue($value)
-	{
-		$returnValue = $value;
-		switch ($this->dataType)
-		{
-			case DataType::DT_DATETIME:
-				if($this->dataFormat !== null)
-				{
-					$date = strtotime($value);
-					$returnValue = date($this->dataFormat, $date);
-				}
-				break;
-			case DataType::DT_TIMESTAMP:
-				if($this->dataFormat !== null)
-				{
-					$date = date_create();
-					date_timestamp_set($date, $value);
-					$returnValue = date_format($date, $this->dataFormat);
-				}
-				break;
-			case DataType::DT_DATETIME_ORIGINAL: //Cannot use in mysql db data
-				$date = strtotime($value);
-				$returnValue = $date;
-				break;
-			case DataType::DT_TIMESTAMP_ORIGINAL: //Cannot use in mysql db data
-				$date = date_create();
-				date_timestamp_set($date, $value);
-				$returnValue = $date;
-				break;				
-			case DataType::DT_FLOAT:
-				$returnValue = (float)$value;
-				break;
-			case DataType::DT_DOUBLE:
-				$returnValue = (double)$value;
-				break;
-			case DataType::DT_INT:
-				$returnValue = (int)$value;
-				break;		
-			case DataType::DT_BOOL:
-				$returnValue = (bool)$value;
-				break;				
-			default:
-				$returnValue = $value;
-		}
-		return $returnValue;
-	}
 }
 ?>
