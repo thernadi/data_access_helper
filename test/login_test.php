@@ -493,6 +493,11 @@ try
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
+	//TEST IS NULL
+	$filters = array();
+	$filters[] = new Param("LastLoginDateTime", null, Operator::OP_IS_NULL);
+	$users = $dbUserRepository->LoadByFilter2($filters);
+
 	$loginTest->deleteUser("user_1"); //physically delete
 	$loginTest->deleteUser("user_2"); //physically delete	
 }

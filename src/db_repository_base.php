@@ -454,7 +454,7 @@ trait DbRepositoryBase
 			foreach ($filters as $filter)
 			{
 			 	$operator = Operator::getOperatorForDB($filter->operator);
-				if ($operator !== Operator::OP_IS_NULL)
+				if ($operator !== "IS NULL")
 				{
 					$query .= $filter->name." $operator ? AND ";
 				}
