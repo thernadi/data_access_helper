@@ -781,11 +781,12 @@ trait DbRepositoryBase
 					$pattern = str_replace('%', '.*', preg_quote($paramValue));
 					if (($param->operator === Operator::OP_EQUAL && $attributeValue === $paramValue)
 						|| ($param->operator === Operator::OP_NOT_EQUAL && $attributeValue !== $paramValue)
-						|| ($param->operator === Operator::OP_LESS_THAN && $attributeValue < $paramValue)
-						|| ($param->operator === Operator::OP_LESS_THAN_OR_EQUAL && $attributeValue <= $paramValue)
-						|| ($param->operator === Operator::OP_GREATER_THAN && $attributeValue > $paramValue)
-						|| ($param->operator === Operator::OP_GREATER_THAN_OR_EQUAL && $attributeValue >= $paramValue)
+						|| ($param->operator === Operator::OP_LESS_THAN && $attributeValue !== null && $attributeValue < $paramValue)
+						|| ($param->operator === Operator::OP_LESS_THAN_OR_EQUAL && $attributeValue !== null && $attributeValue <= $paramValue)
+						|| ($param->operator === Operator::OP_GREATER_THAN && $attributeValue !== null && $attributeValue > $paramValue)
+						|| ($param->operator === Operator::OP_GREATER_THAN_OR_EQUAL && $attributeValue !== null && $attributeValue >= $paramValue)
 						|| ($param->operator === Operator::OP_LIKE && preg_match("/^$pattern$/", $attributeValue))
+						|| ($param->operator === Operator::OP_NOT_LIKE && !preg_match("/^$pattern$/", $attributeValue))
 					)						
 					{
 						$match++;				   

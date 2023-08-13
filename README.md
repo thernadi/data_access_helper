@@ -15,16 +15,17 @@ Currently, it can:
 
 - Manipulate database record column values according to the respective data type
 
-- Better data attribute's searching specially for collectionitem (DT_LIST)'s attributes
+- DT_ITEM, DT_LIST complex attribute types and searching abilities
 
 - Transaction handling
 
 - Caching the database query results
 
-- Filtering searching items with more relations via Param, FilterParam
+- Filtering
 
 //LATER DEVELOPMENT PHASE
-- Database table script generation by the described attributes with foreign keys constraints.
+- Concurrent data managing
+- Database table script generation by the described attributes
 - Historical data handling with DBHistoricalRepository
 
 - Better function and parameters description

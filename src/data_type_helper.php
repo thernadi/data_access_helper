@@ -29,8 +29,9 @@ class Operator
 	const OP_LESS_THAN_OR_EQUAL = 4;
 	const OP_GREATER_THAN = 5;
 	const OP_GREATER_THAN_OR_EQUAL = 6;
-	const OP_LIKE = 8; //the joker character is %
-	const OP_IS_NULL = 7; //DB specific only
+	const OP_LIKE = 7; //the joker character is %
+	const OP_NOT_LIKE = 8; //the joker character is %
+	const OP_IS_NULL = 9; //DB specific only
 
 	public static function getOperatorForDB($operator)
 	{
@@ -58,6 +59,9 @@ class Operator
 			case Operator::OP_LIKE:
 				$returnValue = "LIKE";
 				break;		
+			case Operator::OP_NOT_LIKE:
+				$returnValue = "NOT LIKE";
+				break;						
 			case Operator::OP_IS_NULL:
 				$returnValue = "IS NULL";
 				break;						
@@ -345,53 +349,56 @@ class ItemAttribute
 		}
 		return $returnValue;
 	}
-	
+
 	public function convertToBaseType($value)
 	{
-		$dateFormat = $this->dataFormat;
-		if($dateFormat === null)
-		{
-			$dateFormat = "Y-m-d H:i:s";
-		}
-
 		$returnValue = $value;
-		switch ($this->dataType)
+		if ($returnValue !== null)
 		{
-			case DataType::DT_DATETIME_ORIGINAL: //Not DB
-				$date = strtotime($value);
-				$returnValue = $date;
-				break;
-			case DataType::DT_TIMESTAMP_ORIGINAL: //Not DB
-				$date = date_create();
-				date_timestamp_set($date, $value);
-				$returnValue = $date;
-				break;		
-			case DataType::DT_DATETIME:		
-				$date = strtotime($value);
-				$returnValue = date($dateFormat, $date);
-				break;
-			case DataType::DT_TIMESTAMP:
-				$date = date_create();
-				date_timestamp_set($date, $value);
-				$returnValue = date_format($date, $dateFormat);
-				break;								
-			case DataType::DT_FLOAT:
-				$returnValue = (float)$value;
-				break;
-			case DataType::DT_DOUBLE:
-				$returnValue = (double)$value;
-				break;
-			case DataType::DT_INT:
-				$returnValue = (int)$value;
-				break;		
-			case DataType::DT_BOOL:
-				$returnValue = (bool)$value;
-				break;				
-			default:
-				$returnValue = $value;
+			$dateFormat = $this->dataFormat;
+			if($dateFormat === null)
+			{
+				$dateFormat = "Y-m-d H:i:s";
+			}
+
+			switch ($this->dataType)
+			{
+				case DataType::DT_DATETIME_ORIGINAL: //Not DB
+					$date = strtotime($value);
+					$returnValue = $date;
+					break;
+				case DataType::DT_TIMESTAMP_ORIGINAL: //Not DB
+					$date = date_create();
+					date_timestamp_set($date, $value);
+					$returnValue = $date;
+					break;		
+				case DataType::DT_DATETIME:
+					$date = strtotime($value);
+					$returnValue = date($dateFormat, $date);
+					break;
+				case DataType::DT_TIMESTAMP:
+					$date = date_create();
+					date_timestamp_set($date, $value);
+					$returnValue = date_format($date, $dateFormat);
+					break;								
+				case DataType::DT_FLOAT:
+					$returnValue = (float)$value;
+					break;
+				case DataType::DT_DOUBLE:
+					$returnValue = (double)$value;
+					break;
+				case DataType::DT_INT:
+					$returnValue = (int)$value;
+					break;		
+				case DataType::DT_BOOL:
+					$returnValue = (bool)$value;
+					break;				
+				default:
+					$returnValue = $value;
+			}
 		}
 		return $returnValue;
 	}
-
+	
 }
 ?>

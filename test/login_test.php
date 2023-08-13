@@ -439,7 +439,7 @@ try
 	echo LINE_SEPARATOR;
 	$param = array();
 	$param[] = new Param("Name","Gues%", Operator::OP_LIKE);
-	$param[] = new Param("Code","%UEST", Operator::OP_LIKE);
+	$param[] = new Param("Code","AA", Operator::OP_NOT_LIKE);
 	$filterParam = new FilterParam($param, LogicalOperator::LO_AND);
 	$foundItems = $dbUserRoleRepository->find($dbUserRoleRepository->getAllItemsFromCache(), $filterParam, false); 
 	echo "count: ".count($foundItems);
@@ -462,12 +462,13 @@ try
 	$loginTest->login("user_1", "123");
 	$loginTest->showUserSomeData();
 	$loginTest->logout();
+	$loginTest->registerNewUser("user_2", "123");
 
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
-	//Find test #3
 	$dbUserRepository->buildCache(true);
+	//Find test #3
 	echo "Finding item test #3";
 	echo LINE_SEPARATOR;
 	$param = array();
@@ -479,8 +480,21 @@ try
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
+	//Find test #4
+	echo "Finding item test #4";
+	echo LINE_SEPARATOR;
+	$param = array();
+	$param[] = new Param("LastLoginDateTime", date('Y-m-d H:i:s', strtotime("2023-08-08")), Operator::OP_GREATER_THAN_OR_EQUAL);
+	$param[] = new Param("LastLoginDateTime", null, Operator::OP_EQUAL);	
+	$filterParam = new FilterParam($param, LogicalOperator::LO_OR);
+	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(), $filterParam, false); 
+	echo "count: ".count($foundItems);
+
+	echo LINE_SEPARATOR;
+	echo LINE_SEPARATOR;
 
 	$loginTest->deleteUser("user_1"); //physically delete
+	$loginTest->deleteUser("user_2"); //physically delete	
 }
 catch(\Throwable $e)
 {
