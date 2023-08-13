@@ -800,7 +800,8 @@ trait DbRepositoryBase
 			
 			if (!$matchByOneParameter)
 			{
-				if (($filterParam->logicalOperator === LogicalOperator::LO_OR && $match > 0) || $filterParam->logicalOperator === LogicalOperator::LO_AND && $match === count($filterParam->paramArray))
+				if (($filterParam->logicalOperator === LogicalOperator::LO_OR && $match > 0) 
+				|| ($filterParam->logicalOperator === LogicalOperator::LO_AND && $match === count($filterParam->paramArray)))
 				{
 					$returnValue[] = $item;				
 					if ($firstMatch)

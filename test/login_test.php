@@ -439,7 +439,19 @@ try
 	echo LINE_SEPARATOR;
 	$param = array();
 	$param[] = new Param("Name","Gues%", Operator::OP_LIKE);
-	$param[] = new Param("Name","%ase%", Operator::OP_LIKE);
+	$param[] = new Param("Code","%UEST", Operator::OP_LIKE);
+	$filterParam = new FilterParam($param, LogicalOperator::LO_AND);
+	$foundItems = $dbUserRoleRepository->find($dbUserRoleRepository->getAllItemsFromCache(), $filterParam, false); 
+	echo "count: ".count($foundItems);
+	echo LINE_SEPARATOR;
+	echo LINE_SEPARATOR;
+
+	//Find test #2
+	echo "Finding item test #2";
+	echo LINE_SEPARATOR;
+	$param = array();
+	$param[] = new Param("Name","Gues%", Operator::OP_LIKE);
+	$param[] = new Param("Code","%ASE%", Operator::OP_LIKE);
 	$filterParam = new FilterParam($param, LogicalOperator::LO_OR);
 	$foundItems = $dbUserRoleRepository->find($dbUserRoleRepository->getAllItemsFromCache(), $filterParam, false); 
 	echo "count: ".count($foundItems);
@@ -454,9 +466,9 @@ try
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
-	//Find test #2
+	//Find test #3
 	$dbUserRepository->buildCache(true);
-	echo "Finding item test #2";
+	echo "Finding item test #3";
 	echo LINE_SEPARATOR;
 	$param = array();
 	$param[] = new Param("LastLoginDateTime", date('Y-m-d H:i:s', strtotime("2024-08-08")), Operator::OP_LESS_THAN);
