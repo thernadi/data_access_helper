@@ -21,7 +21,7 @@ abstract class DataType
 	const DT_BLOB = 12;
 }
 
-class Operator
+abstract class Operator
 {
 	const OP_EQUAL = 1;
 	const OP_NOT_EQUAL = 2;	
@@ -251,13 +251,23 @@ class ItemAttribute
 			else if(is_object($val))
 			{	
 				$item = new ItemAttribute($val->name, $val->caption, $val->dataType, $val->dataFormat, $val->required, $val->readonly, $val->isVisible, $val->defaultValue, $val->defaultCaption);				
-				$item->value = $val->value;
-				$item->orderByIndex = $val->orderByIndex;
-
 				if ($val->dataType === DataType::DT_LIST || $val->dataType === DataType::DT_ITEM)
 				{
 					$item->setReferenceDescriptor($val->referenceDescriptor);
 				}
+
+				if ($val->dataType !== DataType::DT_LIST)
+				{
+					$item->value = $val->value;			
+					$item->originalValue = $val->originalValue;
+				}
+				else
+				{
+					$item->value = 	ItemAttribute::getSimpleCopiedItemAttributeArray($val->value);
+					$item->originalValue = ItemAttribute::getSimpleCopiedItemAttributeArray($val->originalValue);
+				}
+				$item->orderByIndex = $val->orderByIndex;
+
 				$returnValue[$item->name] = $item;
 			}
 		}
@@ -299,7 +309,14 @@ class ItemAttribute
 			}
 			else
 			{
-				$returnValue = ItemAttribute::getItemAttribute($itemAttributes, $attributeName);
+				if(count($itemAttributes) > 0 && is_object($itemAttributes[array_keys($itemAttributes)[0]]))
+				{
+					$returnValue = ItemAttribute::getItemAttribute($itemAttributes, $attributeName);
+				}
+				else
+				{
+					$returnValue = array();
+				}
 			}
 		}
 		else

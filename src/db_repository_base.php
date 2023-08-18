@@ -140,12 +140,19 @@ trait DbRepositoryBase
 		}
 	}
 
-	public function getAllItemsFromCache()
+	public function getAllItemsFromCache($withFullyLoad = false)
 	{
 		$returnValue = array();
 		foreach($this->itemCache as $cachedItem)
 		{
-			$returnValue[] = $cachedItem->item;
+			if (!$withFullyLoad)
+			{
+				$returnValue[] = $cachedItem->item;
+			}
+			else
+			{
+				$returnValue[] = $this->getItemFromCache($cachedItem->item[$this->cacheIdProperty]->value);
+			}
 		}
 		return $returnValue;
 	}
@@ -186,7 +193,6 @@ trait DbRepositoryBase
 					$filters = array();
 					$filters[] = new Param($this->cacheIdProperty, $id);		
 					$item = $this->loadByFilter2($filters);
-					$outputItem = null;
 					if(isset($item) && count($item) > 0)
 					{
 						$hasComplexAttribute = false;
@@ -303,7 +309,7 @@ trait DbRepositoryBase
 		return $returnValue;		
 	}
 
-	//$rowArray: array from a mysql query's return output
+	//$rowArray: array from a query's return output
 	public function convertToItemAttributeArrayArray($rowArray, $itemAttributes = null)
 	{
 		$returnValue = array(); 
@@ -438,7 +444,7 @@ trait DbRepositoryBase
 	{
 		$returnValue = array();
 		$query = "SELECT ";
-		if  ($fields != null && count($fields) > 0)
+		if  ($fields !== null && count($fields) > 0)
 		{
 			foreach ($fields as $field)
 				$query .= $field.", ";
@@ -448,7 +454,7 @@ trait DbRepositoryBase
 			$query .="*";
 
 		$query .=" FROM " . $this->tbl;
-		if ($filters != null && count($filters) > 0)
+		if ($filters !== null && count($filters) > 0)
 		{
 			$query .=" WHERE ";
 			foreach ($filters as $filter)
@@ -467,7 +473,7 @@ trait DbRepositoryBase
 		}
 		else
 			$filters = array();
-		if  ($orderFields != null && count($orderFields) > 0)
+		if  ($orderFields !== null && count($orderFields) > 0)
 		{
 			$query .= " ORDER BY ";
 			foreach ($orderFields as $orderField)
@@ -475,7 +481,7 @@ trait DbRepositoryBase
 			$query = substr($query, 0, strlen($query) - 2);
 			
 			$orderDirection = strtoupper($orderDirection);
-			if ($orderDirection != null && ($orderDirection === "ASC" || $orderDirection === "DESC"))
+			if ($orderDirection !== null && ($orderDirection === "ASC" || $orderDirection === "DESC"))
 				$query .=" ".$orderDirection;
 			else
 				$query .=" ASC";
@@ -753,7 +759,7 @@ trait DbRepositoryBase
 	//$items : attributeItemArray array
 	//$filterParam : FilterParam
 	//firstMatch : when true then return the first match
-	public function find($items, $filterParam, $firstMatch = false) 
+	public function find($items, $filterParam, $firstMatch = false)
 	{
 		$returnValue = array();
 		$matchByOneParameter = false;
@@ -767,44 +773,59 @@ trait DbRepositoryBase
 			$filterParam->logicalOperator = LogicalOperator::LO_AND;
 		}
 
-		foreach($items as $item)
-		{
+		$itemsForCheck = ItemAttribute::getSimpleCopiedItemAttributeArray($items);
+
+		for($i=0; $i < count($items); $i++)
+		{					
 			$match = 0;
 			foreach($filterParam->paramArray as $param)
-			{			   
-				$itemAttribute = ItemAttribute::getItemAttribute($item, $param->name);
-				if ($itemAttribute !== null)				
+			{			
+				$itemAttributes = ItemAttribute::getItemAttribute($itemsForCheck[$i], $param->name);
+
+				if (!is_array($itemAttributes))
 				{
-					$paramValue = $param->value;
-					$attributeValue = $itemAttribute->value; 
-					
-					$pattern = str_replace('%', '.*', preg_quote($paramValue));
-					if (($param->operator === Operator::OP_EQUAL && $attributeValue === $paramValue)
-						|| ($param->operator === Operator::OP_NOT_EQUAL && $attributeValue !== $paramValue)
-						|| ($param->operator === Operator::OP_LESS_THAN && $attributeValue !== null && $attributeValue < $paramValue)
-						|| ($param->operator === Operator::OP_LESS_THAN_OR_EQUAL && $attributeValue !== null && $attributeValue <= $paramValue)
-						|| ($param->operator === Operator::OP_GREATER_THAN && $attributeValue !== null && $attributeValue > $paramValue)
-						|| ($param->operator === Operator::OP_GREATER_THAN_OR_EQUAL && $attributeValue !== null && $attributeValue >= $paramValue)
+					$itemAttributes = array($itemAttributes);
+				}
+
+				$submatch = 0;   
+				foreach($itemAttributes as $itemAttribute)
+				{
+					$attributeValue = $itemAttribute->value;					
+					$pattern = str_replace('%', '.*', preg_quote($param->value));
+					if (($param->operator === Operator::OP_EQUAL && $attributeValue === $param->value)
+						|| ($param->operator === Operator::OP_NOT_EQUAL && $attributeValue !== $param->value)
+						|| ($param->operator === Operator::OP_LESS_THAN && $attributeValue !== null && $attributeValue < $param->value)
+						|| ($param->operator === Operator::OP_LESS_THAN_OR_EQUAL && $attributeValue !== null && $attributeValue <= $param->value)
+						|| ($param->operator === Operator::OP_GREATER_THAN && $attributeValue !== null && $attributeValue > $param->value)
+						|| ($param->operator === Operator::OP_GREATER_THAN_OR_EQUAL && $attributeValue !== null && $attributeValue >= $param->value)
 						|| ($param->operator === Operator::OP_LIKE && preg_match("/^$pattern$/", $attributeValue))
 						|| ($param->operator === Operator::OP_NOT_LIKE && !preg_match("/^$pattern$/", $attributeValue))
 					)						
 					{
-						$match++;				   
-					}			   
+						$submatch++;
+						$this->applyFiltersForListAttribute($itemsForCheck[$i], $itemAttribute, $param->name);														
+					}										
 				}
-				
+
+				if ($submatch > 0)
+				{
+					$match++;
+				}
+
 				if ($matchByOneParameter)
 				{
 					break;
-				}			   
+				}
+				
 			}
+
 			
 			if (!$matchByOneParameter)
 			{
 				if (($filterParam->logicalOperator === LogicalOperator::LO_OR && $match > 0) 
 				|| ($filterParam->logicalOperator === LogicalOperator::LO_AND && $match === count($filterParam->paramArray)))
 				{
-					$returnValue[] = $item;				
+					$returnValue[] = $items[$i];				
 					if ($firstMatch)
 					{
 						break;
@@ -815,16 +836,174 @@ trait DbRepositoryBase
 			{
 				if ($match > 0)
 				{
-					$returnValue[] = $item;		
+					$returnValue[] = $items[$i];		
 					if ($firstMatch)
 					{
 						break;
 					}	
 				}
-			}
+			}				
 		}	
 		return $returnValue;
 	}
+
+
+	private function applyFiltersForListAttribute(&$item, $itemAttribute, $attributeName, $lastAttributeName = "", &$filterON = true) 
+	{
+		if ($filterON && str_contains($attributeName, "."))
+		{
+			$attributeNameExploded = explode(".", $attributeName);	
+
+			if (count($attributeNameExploded) > 1)
+			{
+				$parentAttributeName = "";
+				$lastAttributeName = "";
+				foreach($attributeNameExploded as $val)
+				{
+					if ($val === $attributeNameExploded[count($attributeNameExploded)-1])
+					{
+						$lastAttributeName = $attributeNameExploded[count($attributeNameExploded)-1];
+						continue;
+					}		
+					$parentAttributeName .= $val.".";
+				}
+				$parentAttributeName = substr($parentAttributeName, 0, strlen($parentAttributeName) - 1);								
+				$parentAttribute = ItemAttribute::getItemAttribute($item, $parentAttributeName);
+
+				$filteredItemAttributes = array();
+				if(is_object($parentAttribute))
+				{
+					$parentAttribute = array($parentAttribute);
+				}
+
+				if (is_array($parentAttribute) && count($parentAttribute) > 0)
+				{
+					foreach($parentAttribute as $actualParentAttribute)
+					{
+						if ($actualParentAttribute->dataType === DataType::DT_LIST)
+						{
+							foreach($actualParentAttribute->value as $actualParentAttributeItem)
+							{
+								if ($actualParentAttributeItem[$lastAttributeName]->dataType === DataType::DT_LIST)
+								{
+									foreach($actualParentAttributeItem[$lastAttributeName]->value as $actualParentAttributeItemValue)
+									{
+										if (is_array($actualParentAttributeItemValue[$itemAttribute->name]->value) 
+										&&  count($actualParentAttributeItemValue[$itemAttribute->name]->value) > 0 
+									    && is_object($actualParentAttributeItemValue[$itemAttribute->name]->value["Id"]))
+										{
+											if ($actualParentAttributeItemValue[$itemAttribute->name]->value["Id"]->value === $itemAttribute->value["Id"]->value)
+											{
+												$filteredItemAttributes[] = $actualParentAttributeItemValue;
+											}
+										}
+										else
+										{
+											if ($actualParentAttributeItemValue[$itemAttribute->name]->value === $itemAttribute->value)
+											{
+												$filteredItemAttributes[] = $actualParentAttributeItemValue;
+											}
+										}
+									}
+								}
+								else if ($actualParentAttributeItem[$lastAttributeName]->dataType === DataType::DT_ITEM)
+								{
+									if ($actualParentAttributeItem[$lastAttributeName]->value["Id"]->value === $itemAttribute->value["Id"]->value)
+									{
+										$filteredItemAttributes[] = $actualParentAttributeItem[$lastAttributeName];
+									}
+								}
+								else
+								{
+									if ($actualParentAttributeItem[$lastAttributeName]->value === $itemAttribute->value)
+									{
+										$filteredItemAttributes[] = $actualParentAttributeItem[$lastAttributeName];
+									}
+								}
+							}
+						}
+						else if ($actualParentAttribute->dataType === DataType::DT_ITEM)
+						{
+							if ($actualParentAttribute->value[$lastAttributeName]->value === $itemAttribute->value)
+							{
+								$filteredItemAttributes[] = $actualParentAttribute;
+							}
+						}
+
+					}
+
+				}
+
+				if (str_contains($parentAttributeName, "."))
+				{
+					foreach($filteredItemAttributes as $filteredItemAttribute)
+					{
+						$this->applyFiltersForListAttribute($item, $filteredItemAttribute, $parentAttributeName, $lastAttributeName, $filterON);
+					}
+				}
+				else
+				{
+					$this->applyFiltersForListAttribute($item, $filteredItemAttributes, $parentAttributeName, $lastAttributeName, $filterON);
+				}
+
+			}
+		}
+		else
+		{
+			if ($filterON)
+			{
+				if ($item[$attributeName]->dataType === DataType::DT_LIST)
+				{
+					for($i = count($item[$attributeName]->value) - 1; $i >= 0; $i--)
+					{
+						if($item[$attributeName]->value[$i][$lastAttributeName]->dataType === DataType::DT_ITEM)
+						{
+							foreach($itemAttribute as $val)
+							{
+								$itemAttributeIdValue = $val->value["Id"]->value;
+								if ($item[$attributeName]->value[$i][$lastAttributeName]->value["Id"]->value !== $itemAttributeIdValue)
+								{
+									unset($item[$attributeName]->value[$i]);
+								}
+							}
+						}
+						else
+						{																		
+							for($j = count($item[$attributeName]->value[$i][$lastAttributeName]->value) - 1; $j >= 0; $j--)
+							{
+								foreach ($itemAttribute as $val) 
+								{
+									$itemAttributeIdValue = $val["Id"]->value;
+									if ($item[$attributeName]->value[$i][$lastAttributeName]->value[$j]["Id"]->value !== $itemAttributeIdValue)
+									{
+										unset($item[$attributeName]->value[$i][$lastAttributeName]->value[$j]);
+									}
+								}
+							}
+
+							$reIndexedAttributeArray = array();
+							foreach($item[$attributeName]->value[$i][$lastAttributeName]->value as $value)
+							{
+								$reIndexedAttributeArray[] = $value; 
+							}
+							$item[$attributeName]->value[$i][$lastAttributeName]->value = $reIndexedAttributeArray;
+						}
+					}
+					
+					$reIndexedAttributeArray = array();
+					foreach($item[$attributeName]->value as $value)
+					{
+						$reIndexedAttributeArray[] = $value; 
+					}
+					$item[$attributeName]->value = $reIndexedAttributeArray;
+					
+				}
+
+				$filterON = false;
+			}
+		}
+	}
+
 
 }
 

@@ -489,14 +489,69 @@ try
 	$filterParam = new FilterParam($param, LogicalOperator::LO_OR);
 	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(), $filterParam, false); 
 	echo "count: ".count($foundItems);
+	echo LINE_SEPARATOR;
+	echo LINE_SEPARATOR;
+
+	//Find test #5: any user who has "BASE_USER" default user role and "GUEST" UserRole with "LOGLEVEL" = 10 setting
+	echo "Finding item test #5";
+	echo LINE_SEPARATOR;
+	$param = array();
+
+	$param[] = new Param("DefaultUserRole.Code", "BASE_USER", Operator::OP_EQUAL);
+	$param[] = new Param("UserRolesCollection.UserSettingsCollection.Value", "10", Operator::OP_EQUAL);	
+	$param[] = new Param("UserRolesCollection.UserRole.Code", "GUEST", Operator::OP_EQUAL);			
+	$param[] = new Param("UserRolesCollection.UserSettingsCollection.UserSetting.Name", "LOGLEVEL", Operator::OP_EQUAL);		
+
+	$filterParam = new FilterParam($param, LogicalOperator::LO_AND);
+	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(true), $filterParam, false); 
+	echo "count: ".count($foundItems);
 
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
-	//TEST IS NULL
+	//Find test #6:
+	echo "Finding item test #6";
+	echo LINE_SEPARATOR;
+	$param = array();
+
+	$param[] = new Param("DefaultUserRole.Code", "BASE_USER", Operator::OP_EQUAL);
+	$param[] = new Param("UserRolesCollection.UserSettingsCollection.Value", "10", Operator::OP_EQUAL);	
+	$param[] = new Param("UserRolesCollection.UserRole.Code", "GUEST", Operator::OP_EQUAL);			
+	$param[] = new Param("UserRolesCollection.UserSettingsCollection.UserSetting.Name", "LOGLEVEL1", Operator::OP_EQUAL); //NO LOGLEVEL1		
+
+	$filterParam = new FilterParam($param, LogicalOperator::LO_AND);
+	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(true), $filterParam, false); 
+	echo "count: ".count($foundItems);
+
+	echo LINE_SEPARATOR;
+	echo LINE_SEPARATOR;
+
+	//Find test #7:
+	echo "Finding item test #7";
+	echo LINE_SEPARATOR;
+	$param = array();
+
+	$param[] = new Param("DefaultUserRole.Code", "BASE_USER", Operator::OP_EQUAL);
+	$param[] = new Param("UserRolesCollection.UserSettingsCollection.Value", "10", Operator::OP_EQUAL);	
+	$param[] = new Param("UserRolesCollection.UserRole.Code", "GUEST", Operator::OP_EQUAL);			
+	$param[] = new Param("UserRolesCollection.UserSettingsCollection.UserSetting.Name", "LOGLEVEL1", Operator::OP_EQUAL);//NO LOGLEVEL1		
+
+	$filterParam = new FilterParam($param, LogicalOperator::LO_OR);
+	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(true), $filterParam, false); 
+	echo "count: ".count($foundItems);
+
+	echo LINE_SEPARATOR;
+	echo LINE_SEPARATOR;
+
+	echo "DB - IS NULL Test";
+	echo LINE_SEPARATOR;
 	$filters = array();
 	$filters[] = new Param("LastLoginDateTime", null, Operator::OP_IS_NULL);
 	$users = $dbUserRepository->LoadByFilter2($filters);
+	echo "count: ".count($users);
+
+	echo LINE_SEPARATOR;
+	echo LINE_SEPARATOR;
 
 	$loginTest->deleteUser("user_1"); //physically delete
 	$loginTest->deleteUser("user_2"); //physically delete	

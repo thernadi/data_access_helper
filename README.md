@@ -21,7 +21,7 @@ Currently, it can:
 
 - Caching the database query results
 
-- Filtering
+- Filtering abilities: There are several comparing operators for filtering data. The repository items can be filtered by "AND" logical operator from database. The repository items can be filtered by "OR" or "AND" after getting them from database. 
 
 //LATER DEVELOPMENT PHASE
 - Concurrent data managing
