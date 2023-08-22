@@ -774,12 +774,16 @@ trait DbRepositoryBase
 		}
 
 		$itemsForCheck = ItemAttribute::getSimpleCopiedItemAttributeArray($items);
+		for($i = 0; $i < count($itemsForCheck); $i++)
+		{
+			$this->setParent($itemsForCheck[$i]);
+		}
 
-		for($i=0; $i < count($items); $i++)
+		for($i = 0; $i < count($items); $i++)
 		{					
 			$match = 0;
 			foreach($filterParam->paramArray as $param)
-			{			
+			{		
 				$itemAttributes = ItemAttribute::getItemAttribute($itemsForCheck[$i], $param->name);
 
 				if (!is_array($itemAttributes))
@@ -789,24 +793,18 @@ trait DbRepositoryBase
 
 				$submatch = 0;   
 				foreach($itemAttributes as $itemAttribute)
-				{
-					$attributeValue = $itemAttribute->value;					
-					$pattern = str_replace('%', '.*', preg_quote($param->value));
-					if (($param->operator === Operator::OP_EQUAL && $attributeValue === $param->value)
-						|| ($param->operator === Operator::OP_NOT_EQUAL && $attributeValue !== $param->value)
-						|| ($param->operator === Operator::OP_LESS_THAN && $attributeValue !== null && $attributeValue < $param->value)
-						|| ($param->operator === Operator::OP_LESS_THAN_OR_EQUAL && $attributeValue !== null && $attributeValue <= $param->value)
-						|| ($param->operator === Operator::OP_GREATER_THAN && $attributeValue !== null && $attributeValue > $param->value)
-						|| ($param->operator === Operator::OP_GREATER_THAN_OR_EQUAL && $attributeValue !== null && $attributeValue >= $param->value)
-						|| ($param->operator === Operator::OP_LIKE && preg_match("/^$pattern$/", $attributeValue))
-						|| ($param->operator === Operator::OP_NOT_LIKE && !preg_match("/^$pattern$/", $attributeValue))
-					)						
+				{	
+					if ($this->compareValues($itemAttribute->value, $param->value, $param->operator))										
 					{
-						$submatch++;
-						$this->applyFiltersForListAttribute($itemsForCheck[$i], $itemAttribute, $param->name);														
-					}										
-				}
-
+						$submatch++;		
+						$paramNameExploded = explode(".", $param->name);
+						if (count($paramNameExploded) > 1)
+						{
+							$this->applyFiltersForListAttribute($itemAttribute, $itemAttribute);		
+						}
+					}
+				}										
+				
 				if ($submatch > 0)
 				{
 					$match++;
@@ -847,163 +845,87 @@ trait DbRepositoryBase
 		return $returnValue;
 	}
 
+	private function compareValues($value1, $value2, $operator)
+	{				
+		$pattern = str_replace('%', '.*', preg_quote($value2));
+		$returnValue = ($operator === Operator::OP_EQUAL && $value1 === $value2)
+			|| ($operator === Operator::OP_NOT_EQUAL && $value1 !== $value2)
+			|| ($operator === Operator::OP_LESS_THAN && $value1 !== null && $value1 < $value2)
+			|| ($operator === Operator::OP_LESS_THAN_OR_EQUAL && $value1 !== null && $value1  <= $value2)
+			|| ($operator === Operator::OP_GREATER_THAN && $value1 !== null && $value1 > $value2)
+			|| ($operator === Operator::OP_GREATER_THAN_OR_EQUAL && $value1 !== null && $value1 >= $value2)
+			|| ($operator === Operator::OP_LIKE && preg_match("/^$pattern$/", $value1))
+			|| ($operator === Operator::OP_NOT_LIKE && !preg_match("/^$pattern$/", $value1));
+	
+			return $returnValue;
+	}
 
-	private function applyFiltersForListAttribute(&$item, $itemAttribute, $attributeName, $lastAttributeName = "", &$filterON = true) 
+	private function setParent($item, $parent = null)
 	{
-		if ($filterON && str_contains($attributeName, "."))
+		if (is_array($item) 
+		&& count($item) > 0)	
 		{
-			$attributeNameExploded = explode(".", $attributeName);	
-
-			if (count($attributeNameExploded) > 1)
+			for ($i = 0; $i < count($item); $i++)
 			{
-				$parentAttributeName = "";
-				$lastAttributeName = "";
-				foreach($attributeNameExploded as $val)
+				$item[array_keys($item)[$i]]->parent = $parent;
+
+				if ($item[array_keys($item)[$i]]->dataType === DataType::DT_LIST)
 				{
-					if ($val === $attributeNameExploded[count($attributeNameExploded)-1])
+					for($j = 0; $j < count($item[array_keys($item)[$i]]->value); $j++)
 					{
-						$lastAttributeName = $attributeNameExploded[count($attributeNameExploded)-1];
-						continue;
-					}		
-					$parentAttributeName .= $val.".";
-				}
-				$parentAttributeName = substr($parentAttributeName, 0, strlen($parentAttributeName) - 1);								
-				$parentAttribute = ItemAttribute::getItemAttribute($item, $parentAttributeName);
-
-				$filteredItemAttributes = array();
-				if(is_object($parentAttribute))
-				{
-					$parentAttribute = array($parentAttribute);
-				}
-
-				if (is_array($parentAttribute) && count($parentAttribute) > 0)
-				{
-					foreach($parentAttribute as $actualParentAttribute)
-					{
-						if ($actualParentAttribute->dataType === DataType::DT_LIST)
-						{
-							foreach($actualParentAttribute->value as $actualParentAttributeItem)
-							{
-								if ($actualParentAttributeItem[$lastAttributeName]->dataType === DataType::DT_LIST)
-								{
-									foreach($actualParentAttributeItem[$lastAttributeName]->value as $actualParentAttributeItemValue)
-									{
-										if (is_array($actualParentAttributeItemValue[$itemAttribute->name]->value) 
-										&&  count($actualParentAttributeItemValue[$itemAttribute->name]->value) > 0 
-									    && is_object($actualParentAttributeItemValue[$itemAttribute->name]->value["Id"]))
-										{
-											if ($actualParentAttributeItemValue[$itemAttribute->name]->value["Id"]->value === $itemAttribute->value["Id"]->value)
-											{
-												$filteredItemAttributes[] = $actualParentAttributeItemValue;
-											}
-										}
-										else
-										{
-											if ($actualParentAttributeItemValue[$itemAttribute->name]->value === $itemAttribute->value)
-											{
-												$filteredItemAttributes[] = $actualParentAttributeItemValue;
-											}
-										}
-									}
-								}
-								else if ($actualParentAttributeItem[$lastAttributeName]->dataType === DataType::DT_ITEM)
-								{
-									if ($actualParentAttributeItem[$lastAttributeName]->value["Id"]->value === $itemAttribute->value["Id"]->value)
-									{
-										$filteredItemAttributes[] = $actualParentAttributeItem[$lastAttributeName];
-									}
-								}
-								else
-								{
-									if ($actualParentAttributeItem[$lastAttributeName]->value === $itemAttribute->value)
-									{
-										$filteredItemAttributes[] = $actualParentAttributeItem[$lastAttributeName];
-									}
-								}
-							}
-						}
-						else if ($actualParentAttribute->dataType === DataType::DT_ITEM)
-						{
-							if ($actualParentAttribute->value[$lastAttributeName]->value === $itemAttribute->value)
-							{
-								$filteredItemAttributes[] = $actualParentAttribute;
-							}
-						}
-
-					}
-
-				}
-
-				if (str_contains($parentAttributeName, "."))
-				{
-					foreach($filteredItemAttributes as $filteredItemAttribute)
-					{
-						$this->applyFiltersForListAttribute($item, $filteredItemAttribute, $parentAttributeName, $lastAttributeName, $filterON);
+						$this->setParent($item[array_keys($item)[$i]]->value[$j], $item[array_keys($item)[$i]]);				
 					}
 				}
-				else
+				else if ($item[array_keys($item)[$i]]->dataType === DataType::DT_ITEM)
 				{
-					$this->applyFiltersForListAttribute($item, $filteredItemAttributes, $parentAttributeName, $lastAttributeName, $filterON);
+					$this->setParent($item[array_keys($item)[$i]]->value, $item[array_keys($item)[$i]]);
 				}
-
-			}
-		}
-		else
-		{
-			if ($filterON)
-			{
-				if ($item[$attributeName]->dataType === DataType::DT_LIST)
-				{
-					for($i = count($item[$attributeName]->value) - 1; $i >= 0; $i--)
-					{
-						if($item[$attributeName]->value[$i][$lastAttributeName]->dataType === DataType::DT_ITEM)
-						{
-							foreach($itemAttribute as $val)
-							{
-								$itemAttributeIdValue = $val->value["Id"]->value;
-								if ($item[$attributeName]->value[$i][$lastAttributeName]->value["Id"]->value !== $itemAttributeIdValue)
-								{
-									unset($item[$attributeName]->value[$i]);
-								}
-							}
-						}
-						else
-						{																		
-							for($j = count($item[$attributeName]->value[$i][$lastAttributeName]->value) - 1; $j >= 0; $j--)
-							{
-								foreach ($itemAttribute as $val) 
-								{
-									$itemAttributeIdValue = $val["Id"]->value;
-									if ($item[$attributeName]->value[$i][$lastAttributeName]->value[$j]["Id"]->value !== $itemAttributeIdValue)
-									{
-										unset($item[$attributeName]->value[$i][$lastAttributeName]->value[$j]);
-									}
-								}
-							}
-
-							$reIndexedAttributeArray = array();
-							foreach($item[$attributeName]->value[$i][$lastAttributeName]->value as $value)
-							{
-								$reIndexedAttributeArray[] = $value; 
-							}
-							$item[$attributeName]->value[$i][$lastAttributeName]->value = $reIndexedAttributeArray;
-						}
-					}
-					
-					$reIndexedAttributeArray = array();
-					foreach($item[$attributeName]->value as $value)
-					{
-						$reIndexedAttributeArray[] = $value; 
-					}
-					$item[$attributeName]->value = $reIndexedAttributeArray;
-					
-				}
-
-				$filterON = false;
 			}
 		}
 	}
 
+	//We need only the the most nearest DT_LIST attribute only. (Top level not needed!)
+	private function applyFiltersForListAttribute($attribute, $childAttribute) 
+	{		
+		$returnValue = false;
+		while(!$returnValue && $attribute !== null && $attribute->dataType !== DataType::DT_LIST)
+		{					
+			$returnValue = $this->applyFiltersForListAttribute($attribute->parent, $attribute);	
+		}
+
+		if (!$returnValue && $attribute !== null)
+		{
+			for($i = count($attribute->value) - 1; $i >= 0; $i--)
+			{
+				if ($childAttribute->dataType === DataType::DT_ITEM)
+				{
+					if ($attribute->value[$i][$childAttribute->name]->value["Id"]->value !== $childAttribute->value["Id"]->value)
+					{
+						unset($attribute->value[$i]);
+					}
+				}
+				else
+				{
+					if ($attribute->value[$i][$childAttribute->name]->value !== $childAttribute->value)
+					{
+						unset($attribute->value[$i]);
+					}
+				}
+			}
+			
+			$reIndexedAttributeArray = array();
+			foreach($attribute->value as $value)
+			{
+				$reIndexedAttributeArray[] = $value; 
+			}
+			$attribute->value = $reIndexedAttributeArray;
+
+			$returnValue = true;
+		}
+
+		return $returnValue;
+		
+	}
 
 }
 

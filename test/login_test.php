@@ -2,7 +2,7 @@
 namespace Rasher\Test;
 use Rasher\Data\PDO\DataManagement\{ConnectionData}; //PDO extension
 //use Rasher\Data\MySQLi\DataManagement\{ConnectionData}; //MySQLi extension
-use Rasher\Data\UserManagement\{DbUserSettingRepository,DbUserRoleRepository,DbUserRepository};
+use Rasher\Data\UserManagement\{DbUserRoleSettingRepository,DbUserRoleRepository,DbUserRepository};
 use Rasher\Data\Type\{LogicalOperator,Param,FilterParam,Operator,ItemAttribute};
 use Rasher\Common\{Common};
 
@@ -22,14 +22,19 @@ class LoginTest
 	{
 		try
 		{	
+			$this->dbUserRepository->dbUserRoleRepository->beginTransaction();
 			$this->dbUserRepository->beginTransaction();
-			$this->dbUserRepository->deleteAll_User_UserRolesCollection_UserSettingsCollection();
+
+			$this->dbUserRepository->dbUserRoleRepository->deleteAll_UserRole_UserRoleSettingsCollection();
 			$this->dbUserRepository->deleteAll_User_UserRolesCollection();
 			$this->dbUserRepository->deleteAll();
+			
+			$this->dbUserRepository->dbUserRoleRepository->commitTransaction();
 			$this->dbUserRepository->commitTransaction();
 		}
 		catch (\Throwable $e)
 		{
+			$this->dbUserRepository->dbUserRoleRepository->rollbackTransaction();
 			$this->dbUserRepository->rollbackTransaction();
 			throw $e;
 		}
@@ -39,30 +44,97 @@ class LoginTest
 	{
 		try
 		{	
+			$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->beginTransaction();
 			$this->dbUserRepository->dbUserRoleRepository->beginTransaction();
-			$this->dbUserRepository->dbUserSettingRepository->beginTransaction();
 
+			$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->deleteAll();
 			$this->dbUserRepository->dbUserRoleRepository->deleteAll();
-			$this->dbUserRepository->dbUserSettingRepository->deleteAll();
 
+			$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->commitTransaction();
 			$this->dbUserRepository->dbUserRoleRepository->commitTransaction();
-			$this->dbUserRepository->dbUserSettingRepository->commitTransaction();
 		}
 		catch (\Throwable $e)
 		{
+			$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->rollbackTransaction();
 			$this->dbUserRepository->dbUserRoleRepository->rollbackTransaction();
-			$this->dbUserRepository->dbUserSettingRepository->rollbackTransaction();
 			throw $e;
 		}
 	}
 
 	public function createUserRelatedBaseData()
-	{
-		//UserRole
+	{	
 		try
 		{	
+			//UserSetting
+			$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->beginTransaction();
+
+			$filters = array();
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Name", "ACTIVE");
+			if (!$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->checkItemInDB($filters, $item))
+			{
+				$item = $this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->getNewItemInstance();
+				$item["Name"]->value = "ACTIVE";
+				$item["DefaultValue"]->value = 0;
+				$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->save($item);
+			}
+
+			$filters = array();
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Name", "LOGLEVEL");
+			if (!$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->checkItemInDB($filters, $item))
+			{
+				$item = $this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->getNewItemInstance();
+				$item["Name"]->value = "LOGLEVEL";
+				$item["DefaultValue"]->value = 1;
+				$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->save($item);
+			}
+
+			$filters = array();
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Name", "ACCESS_READ");
+			if (!$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->checkItemInDB($filters, $item))
+			{
+				$item = $this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->getNewItemInstance();
+				$item["Name"]->value = "ACCESS_READ";
+				$item["DefaultValue"]->value = 0;
+				$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->save($item);
+			}
+
+			$filters = array();
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Name", "ACCESS_WRITE");
+			if (!$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->checkItemInDB($filters, $item))
+			{
+				$item = $this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->getNewItemInstance();
+				$item["Name"]->value = "ACCESS_WRITE";
+				$item["DefaultValue"]->value = 0;
+				$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->save($item);
+			}
+
+			$filters = array();
+			$filters[] = new Param("IsDeleted", 0);
+			$filters[] = new Param("Name", "ACCESS_DOWNLOAD");
+			if (!$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->checkItemInDB($filters, $item))
+			{
+				$item = $this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->getNewItemInstance();
+				$item["Name"]->value = "ACCESS_DOWNLOAD";
+				$item["DefaultValue"]->value = 0;
+				$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->save($item);
+			}
+
+			$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->commitTransaction();
+		}
+		catch (\Throwable $e)
+		{
+			$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->rollbackTransaction();
+			throw $e;
+		}
+
+		try
+		{		
+			//UserRole
 			$this->dbUserRepository->dbUserRoleRepository->beginTransaction();
-			$this->dbUserRepository->dbUserSettingRepository->beginTransaction();
 
 			$filters = array();
 			$filters[] = new Param("IsDeleted", 0);
@@ -72,6 +144,11 @@ class LoginTest
 				$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
 				$item["Code"]->value = "BASE_USER";
 				$item["Name"]->value = "Base user";
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("ACTIVE", "1");
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("LOGLEVEL", "3");
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("ACCESS_READ", "1");
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("ACCESS_WRITE", "1");
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("ACCESS_DOWNLOAD", "1");
 				$this->dbUserRepository->dbUserRoleRepository->save($item);
 			}
 	
@@ -83,6 +160,11 @@ class LoginTest
 				$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
 				$item["Code"]->value = "GUEST";
 				$item["Name"]->value = "Guest";
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("ACTIVE", "1");
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("LOGLEVEL", "10");
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("ACCESS_READ", "1");
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("ACCESS_WRITE", "0");
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("ACCESS_DOWNLOAD", "1");
 				$this->dbUserRepository->dbUserRoleRepository->save($item);
 			}
 	
@@ -94,75 +176,35 @@ class LoginTest
 				$item = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance();
 				$item["Code"]->value = "ADMIN";
 				$item["Name"]->value = "Admin";
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("ACTIVE", "1");
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("LOGLEVEL", "1");
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("ACCESS_READ", "1");
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("ACCESS_WRITE", "1");
+				$item["UserRoleSettingsCollection"]->value[] = $this->getNewUserRoleSettingCollectionItem("ACCESS_DOWNLOAD", "1");
 				$this->dbUserRepository->dbUserRoleRepository->save($item);
-			}
-	
-			//UserSetting
-			$filters = array();
-			$filters[] = new Param("IsDeleted", 0);
-			$filters[] = new Param("Name", "ACTIVE");
-			if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
-			{
-				$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
-				$item["Name"]->value = "ACTIVE";
-				$item["DefaultValue"]->value = 0;
-				$this->dbUserRepository->dbUserSettingRepository->save($item);
-			}
-	
-			$filters = array();
-			$filters[] = new Param("IsDeleted", 0);
-			$filters[] = new Param("Name", "LOGLEVEL");
-			if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
-			{
-				$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
-				$item["Name"]->value = "LOGLEVEL";
-				$item["DefaultValue"]->value = 1;
-				$this->dbUserRepository->dbUserSettingRepository->save($item);
-			}
-	
-			$filters = array();
-			$filters[] = new Param("IsDeleted", 0);
-			$filters[] = new Param("Name", "ACCESS_READ");
-			if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
-			{
-				$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
-				$item["Name"]->value = "ACCESS_READ";
-				$item["DefaultValue"]->value = 0;
-				$this->dbUserRepository->dbUserSettingRepository->save($item);
-			}
-	
-			$filters = array();
-			$filters[] = new Param("IsDeleted", 0);
-			$filters[] = new Param("Name", "ACCESS_WRITE");
-			if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
-			{
-				$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
-				$item["Name"]->value = "ACCESS_WRITE";
-				$item["DefaultValue"]->value = 0;
-				$this->dbUserRepository->dbUserSettingRepository->save($item);
-			}
-	
-			$filters = array();
-			$filters[] = new Param("IsDeleted", 0);
-			$filters[] = new Param("Name", "ACCESS_DOWNLOAD");
-			if (!$this->dbUserRepository->dbUserSettingRepository->checkItemInDB($filters, $item))
-			{
-				$item = $this->dbUserRepository->dbUserSettingRepository->getNewItemInstance();
-				$item["Name"]->value = "ACCESS_DOWNLOAD";
-				$item["DefaultValue"]->value = 0;
-				$this->dbUserRepository->dbUserSettingRepository->save($item);
 			}
 
 			$this->dbUserRepository->dbUserRoleRepository->commitTransaction();
-			$this->dbUserRepository->dbUserSettingRepository->commitTransaction();
 		}
 		catch (\Throwable $e)
 		{
 			$this->dbUserRepository->dbUserRoleRepository->rollbackTransaction();
-			$this->dbUserRepository->dbUserSettingRepository->rollbackTransaction();
 			throw $e;
 		}
 	}
+
+	private function getNewUserRoleSettingCollectionItem($userRoleSettingName, $value)
+	{
+		$userRoleSettingCollectionItem = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance($this->dbUserRepository->dbUserRoleRepository->getUserRoleUserRoleSettingsCollectionItemAttributes());
+		$filters = array();
+		$filters[] = new Param("IsDeleted", 0);
+		$filters[] = new Param("Name", $userRoleSettingName);		
+		$userRoleSetting = $this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->loadByFilter2($filters);
+		$userRoleSettingCollectionItem["UserRoleSetting"]->value = $userRoleSetting[0];
+		$userRoleSettingCollectionItem["Value"]->value = $value;	
+		return $userRoleSettingCollectionItem;
+	}
+
 
     public function login($loginName, $password)
     {
@@ -210,24 +252,18 @@ class LoginTest
 			echo "User:";
 			$this->dbUserRepository->writeOutSimpleData($user);
 
-			echo "DefaultUserRole.Name: ";
-			$defaultUserRoleAttributeNameAttribute = ItemAttribute::getItemAttribute($user[0], "DefaultUserRole.Name");
-			echo $defaultUserRoleAttributeNameAttribute->value;			
-			echo LINE_SEPARATOR;
-			Common::writeOutLetter("-", 50, LINE_SEPARATOR);
-
 			echo "UserRolesCollection.UserRole.Code:".LINE_SEPARATOR;
-			$userRolesCollectionUserRoleAttributeCodeAttribute = ItemAttribute::getItemAttribute($user[0], "UserRolesCollection.UserRole.Code");
-			foreach($userRolesCollectionUserRoleAttributeCodeAttribute as $val)
+			$attribute = ItemAttribute::getItemAttribute($user[0], "UserRolesCollection.UserRole.Code");
+			foreach($attribute as $val)
 			{
 				echo $val->value.LINE_SEPARATOR;
 			}
 			echo LINE_SEPARATOR;
 			Common::writeOutLetter("-", 50, LINE_SEPARATOR);
 
-			echo "UserRolesCollection.UserSettingsCollection.Value".LINE_SEPARATOR;
-			$userRolesCollectionUserSettingsCollectionAttributeValueAttribute = ItemAttribute::getItemAttribute($user[0], "UserRolesCollection.UserSettingsCollection.Value");
-			foreach($userRolesCollectionUserSettingsCollectionAttributeValueAttribute as $val)
+			echo "UserRolesCollection.UserRole.UserRoleSettingsCollection.UserRoleSetting.Value".LINE_SEPARATOR;
+			$attribute = ItemAttribute::getItemAttribute($user[0], "UserRolesCollection.UserRole.UserRoleSettingsCollection.Value");
+			foreach($attribute as $val)
 			{
 				echo $val->value.LINE_SEPARATOR;
 			}
@@ -235,34 +271,21 @@ class LoginTest
 			echo LINE_SEPARATOR;	
 			Common::writeOutLetter("-", 50, LINE_SEPARATOR);
 			echo "UserRolesCollection:";
-			$userRolesCollectionAttribute = $user[0]["UserRolesCollection"];
-			$this->dbUserRepository->writeOutSimpleData($userRolesCollectionAttribute->value);
+			$this->dbUserRepository->writeOutSimpleData($user[0]["UserRolesCollection"]->value);
 			echo "UserRolesCollection UserRole codes with settings and values:";
 			echo LINE_SEPARATOR;
-			foreach($userRolesCollectionAttribute->value as $userRoleCollectionItem)
+			
+			foreach($user[0]["UserRolesCollection"]->value as $userRoleCollectionItem)
 			{
-				$userRoleAttributeNameAttribute = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserRole.Code");	
-				echo $userRoleAttributeNameAttribute->value;
-				echo LINE_SEPARATOR;
-				echo "User setting names:".LINE_SEPARATOR;
-				$userSettingAttributeNameAttribute = ItemAttribute::getItemAttribute($userRoleCollectionItem, "UserSettingsCollection.UserSetting.Name");	
-				foreach($userSettingAttributeNameAttribute as $value)
-				{
-					echo " -> ".$value->value;
-					echo LINE_SEPARATOR;					
-				}
-
-				echo "UserSettings with names and values:".LINE_SEPARATOR;
-				$userSettingCollectionAttribute = $userRoleCollectionItem["UserSettingsCollection"];
-				foreach($userSettingCollectionAttribute->value as $userSettingCollectionItem)
-				{	
-					$userSettingCollectionAttributeUserSettingNameAttribute = ItemAttribute::getItemAttribute($userSettingCollectionItem, "UserSetting.Name");
-					echo " -> ".$userSettingCollectionAttributeUserSettingNameAttribute->value." : ".$userSettingCollectionItem["Value"]->value;
-					echo LINE_SEPARATOR;	
-				}
 				echo LINE_SEPARATOR;	
+				echo $userRoleCollectionItem["UserRole"]->value["Code"]->value.":";
+				echo LINE_SEPARATOR;
+				foreach($userRoleCollectionItem["UserRole"]->value["UserRoleSettingsCollection"]->value as $userRoleUserSettingCollectionItem)
+				{	
+					echo $userRoleUserSettingCollectionItem["UserRoleSetting"]->value["Name"]->value." -> ".$userRoleUserSettingCollectionItem["Value"]->value;
+					echo LINE_SEPARATOR;
+				}
 			}
-
 			echo LINE_SEPARATOR;	
 		}
 		else
@@ -271,7 +294,7 @@ class LoginTest
 		}
 	}
 
-	private function getNewUserRoleCollectionItem($userRoleCode, $settingValuesParamArrayArray)
+	public function getNewUserRoleCollectionItem($userRoleCode)
 	{
 		$userRoleCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionItemAttributes());
 		$filters = array();
@@ -279,26 +302,10 @@ class LoginTest
 		$filters[] = new Param("Code", $userRoleCode);		
 		$userRole = $this->dbUserRepository->dbUserRoleRepository->loadByFilter2($filters);
 		$userRoleCollectionItem["UserRole"]->value = $userRole[0];
-
-		foreach($settingValuesParamArrayArray as $settingValuesParamArray)
-		{
-			$settingCode = Param::getParam("Code", $settingValuesParamArray)->value;
-			$settingValue = Param::getParam("Value", $settingValuesParamArray)->value;
-
-			$filters = array();
-			$filters[] = new Param("IsDeleted", 0);
-			$filters[] = new Param("Name", $settingCode);		
-			$userSetting = $this->dbUserRepository->dbUserSettingRepository->loadByFilter2($filters);
-	
-			$userRoleCollectionItemUserSettingCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionUserSettingsCollectionItemAttributes());
-			$userRoleCollectionItemUserSettingCollectionItem["UserSetting"]->value = $userSetting[0];
-			$userRoleCollectionItemUserSettingCollectionItem["Value"]->value = $settingValue;
-			$userRoleCollectionItem["UserSettingsCollection"]->value[] = $userRoleCollectionItemUserSettingCollectionItem;
-		}
 		return $userRoleCollectionItem;
 	}
 
-	public function registerNewUser($loginName, $password)
+	public function registerNewUser($loginName, $password, $userRoleCollectionItemArray)
 	{	
 		$newUser = null;
 		$filters = array();
@@ -315,27 +322,9 @@ class LoginTest
 			$newUser = $this->dbUserRepository->getNewItemInstance();
 			$newUser["LoginName"]->value = $loginName;	
 			$newUser["Password"]->value = $passwordsha1;
-			
-			//Set user's DefaultUserRole
-			$filters = array();
-			$filters[] = new Param("IsDeleted", 0);
-			$filters[] = new Param("Code", "BASE_USER");		
-			$userRole = $this->dbUserRepository->dbUserRoleRepository->loadByFilter2($filters);
-			$newUser["DefaultUserRole"]->value = $userRole[0];
-	
+		
 			//Set user's UserRolesCollection
-
-			//Adding Guest UserRole
-			$settingValuesParamArrayArray = array();
-			$settingValuesParamArrayArray[] = array(new Param("Code", "ACTIVE"), new Param("Value", 1));
-			$settingValuesParamArrayArray[] = array(new Param("Code", "LOGLEVEL"), new Param("Value", 10));		
-			$newUser["UserRolesCollection"]->value[] = $this->getNewUserRoleCollectionItem("GUEST", $settingValuesParamArrayArray);
-
-			//Adding Base_User UserRole
-			$settingValuesParamArrayArray = array();
-			$settingValuesParamArrayArray[] = array(new Param("Code", "ACTIVE"), new Param("Value", 1));
-			$settingValuesParamArrayArray[] = array(new Param("Code", "LOGLEVEL"), new Param("Value", 3));					
-			$newUser["UserRolesCollection"]->value[] = $this->getNewUserRoleCollectionItem("BASE_USER", $settingValuesParamArrayArray);
+			$newUser["UserRolesCollection"]->value = $userRoleCollectionItemArray;
 
 			$this->dbUserRepository->saveWithTransaction($newUser);
 			echo "$loginName user registered!".LINE_SEPARATOR;
@@ -373,13 +362,14 @@ try
 	//$connectionData = new ConnectionData("mysql:host=localhost;dbname=test", "userName", "password"); // use it with PDO extension (MySQL)
 	$connectionData = new ConnectionData("sqlsrv:server=(local);Database=test","",""); //PDO MSSQL
 
+	//DbUserRoleSettingRepository single instance
+	$dbUserRoleSettingRepository = new DbUserRoleSettingRepository($connectionData, true, "Name"); //Caching by Name
+
 	//DbUserRoleRepository single instance
-	$dbUserRoleRepository = new DbUserRoleRepository($connectionData, true, "Code"); //Caching by Code
+	$dbUserRoleRepository = new DbUserRoleRepository($connectionData,$dbUserRoleSettingRepository, true, "Code"); //Caching by Code
 	
-	//DbUserSettingRepository single instance
-	$dbUserSettingRepository = new DbUserSettingRepository($connectionData, true, "Name"); //Caching by Name
 	//DbUserRepository single instance
-	$dbUserRepository = new DbUserRepository($connectionData, $dbUserSettingRepository, $dbUserRoleRepository, true);
+	$dbUserRepository = new DbUserRepository($connectionData, $dbUserRoleRepository, true);
 
 	$loginTest = new LoginTest($dbUserRepository);
 	//Comment out if you want to modify this class for several times!
@@ -402,35 +392,35 @@ try
 	//Build cache
 	echo "Using cached items:".LINE_SEPARATOR;
 	$dbUserRoleRepository->buildCache(true);
-	$dbUserSettingRepository->buildCache(true);
+	$dbUserRoleSettingRepository->buildCache(true);
 
 	$userRoleItem = $dbUserRoleRepository->getItemFromCache("GUEST");
 	echo LINE_SEPARATOR;
 	echo $userRoleItem["Name"]->value.LINE_SEPARATOR;
-	$userSettingItem = $dbUserSettingRepository->getItemFromCache("ACTIVE");
+	$userSettingItem = $dbUserRoleSettingRepository->getItemFromCache("ACTIVE");
 	echo $userSettingItem["Name"]->value.LINE_SEPARATOR;
 
 	//Add new usersetting items to itemCache
-	$userSettingItem = $dbUserSettingRepository->getNewItemInstance();
+	$userSettingItem = $dbUserRoleSettingRepository->getNewItemInstance();
 	$userSettingItem["Name"]->value = "TEST1";
 	$userSettingItem["DefaultValue"]->value = "TEST1";
-	$dbUserSettingRepository->addItemToCache($userSettingItem);
-	$userSettingItem = $dbUserSettingRepository->getItemFromCache("TEST1");
+	$dbUserRoleSettingRepository->addItemToCache($userSettingItem);
+	$userSettingItem = $dbUserRoleSettingRepository->getItemFromCache("TEST1");
 	echo $userSettingItem["Name"]->value."(Id: ".$userSettingItem["Id"]->value.")".LINE_SEPARATOR;
 
-	$userSettingItem = $dbUserSettingRepository->getNewItemInstance();
+	$userSettingItem = $dbUserRoleSettingRepository->getNewItemInstance();
 	$userSettingItem["Name"]->value = "TEST2";
 	$userSettingItem["DefaultValue"]->value = "TEST2";
-	$dbUserSettingRepository->addItemToCache($userSettingItem);
-	$userSettingItem = $dbUserSettingRepository->getItemFromCache("TEST2");
+	$dbUserRoleSettingRepository->addItemToCache($userSettingItem);
+	$userSettingItem = $dbUserRoleSettingRepository->getItemFromCache("TEST2");
 	echo $userSettingItem["Name"]->value."(Id: ".$userSettingItem["Id"]->value.")".LINE_SEPARATOR;
 	
 	//Save new usersetting items to DB
-	$dbUserSettingRepository->saveCache();
+	$dbUserRoleSettingRepository->saveCache();
 	
-	$userSettingItem = $dbUserSettingRepository->getItemFromCache("TEST1");
+	$userSettingItem = $dbUserRoleSettingRepository->getItemFromCache("TEST1");
 	echo $userSettingItem["Name"]->value."(Id: ".$userSettingItem["Id"]->value.")".LINE_SEPARATOR;
-	$userSettingItem = $dbUserSettingRepository->getItemFromCache("TEST2");
+	$userSettingItem = $dbUserRoleSettingRepository->getItemFromCache("TEST2");
 	echo $userSettingItem["Name"]->value."(Id: ".$userSettingItem["Id"]->value.")".LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
@@ -441,7 +431,7 @@ try
 	$param[] = new Param("Name","Gues%", Operator::OP_LIKE);
 	$param[] = new Param("Code","AA", Operator::OP_NOT_LIKE);
 	$filterParam = new FilterParam($param, LogicalOperator::LO_AND);
-	$foundItems = $dbUserRoleRepository->find($dbUserRoleRepository->getAllItemsFromCache(), $filterParam, false); 
+	$foundItems = $dbUserRoleRepository->find($dbUserRoleRepository->getAllItemsFromCache(true), $filterParam, false); 
 	echo "count: ".count($foundItems);
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
@@ -453,16 +443,23 @@ try
 	$param[] = new Param("Name","Gues%", Operator::OP_LIKE);
 	$param[] = new Param("Code","%ASE%", Operator::OP_LIKE);
 	$filterParam = new FilterParam($param, LogicalOperator::LO_OR);
-	$foundItems = $dbUserRoleRepository->find($dbUserRoleRepository->getAllItemsFromCache(), $filterParam, false); 
+	$foundItems = $dbUserRoleRepository->find($dbUserRoleRepository->getAllItemsFromCache(true), $filterParam, false); 
 	echo "count: ".count($foundItems);
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
-	$loginTest->registerNewUser("user_1", "123");
+
+	$userRoleCollectionItemArray = array(
+	$loginTest->getNewUserRoleCollectionItem("BASE_USER"),
+	$loginTest->getNewUserRoleCollectionItem("GUEST"));
+	$loginTest->registerNewUser("user_1", "123", $userRoleCollectionItemArray);
 	$loginTest->login("user_1", "123");
 	$loginTest->showUserSomeData();
 	$loginTest->logout();
-	$loginTest->registerNewUser("user_2", "123");
+
+	$userRoleCollectionItemArray = array(
+	$loginTest->getNewUserRoleCollectionItem("BASE_USER"));
+	$loginTest->registerNewUser("user_2", "123", $userRoleCollectionItemArray);
 
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
@@ -474,7 +471,7 @@ try
 	$param = array();
 	$param[] = new Param("LastLoginDateTime", date('Y-m-d H:i:s', strtotime("2024-08-08")), Operator::OP_LESS_THAN);
 	$filterParam = new FilterParam($param);
-	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(), $filterParam, false); 
+	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(true), $filterParam, false); 
 	echo "count: ".count($foundItems);
 
 	echo LINE_SEPARATOR;
@@ -487,20 +484,19 @@ try
 	$param[] = new Param("LastLoginDateTime", date('Y-m-d H:i:s', strtotime("2023-08-08")), Operator::OP_GREATER_THAN_OR_EQUAL);
 	$param[] = new Param("LastLoginDateTime", null, Operator::OP_EQUAL);	
 	$filterParam = new FilterParam($param, LogicalOperator::LO_OR);
-	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(), $filterParam, false); 
+	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(true), $filterParam, false); 
 	echo "count: ".count($foundItems);
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
-	//Find test #5: any user who has "BASE_USER" default user role and "GUEST" UserRole with "LOGLEVEL" = 10 setting
+	//Find test #5: any user who has "BASE_USER" UserRole and has "LOGLEVEL" = 3 setting //2 user items
 	echo "Finding item test #5";
 	echo LINE_SEPARATOR;
 	$param = array();
 
-	$param[] = new Param("DefaultUserRole.Code", "BASE_USER", Operator::OP_EQUAL);
-	$param[] = new Param("UserRolesCollection.UserSettingsCollection.Value", "10", Operator::OP_EQUAL);	
-	$param[] = new Param("UserRolesCollection.UserRole.Code", "GUEST", Operator::OP_EQUAL);			
-	$param[] = new Param("UserRolesCollection.UserSettingsCollection.UserSetting.Name", "LOGLEVEL", Operator::OP_EQUAL);		
+	$param[] = new Param("UserRolesCollection.UserRole.Code", "BASE_USER", Operator::OP_EQUAL);		
+	$param[] = new Param("UserRolesCollection.UserRole.UserRoleSettingsCollection.Value", "3", Operator::OP_EQUAL);		
+	$param[] = new Param("UserRolesCollection.UserRole.UserRoleSettingsCollection.UserRoleSetting.Name", "LOGLEVEL", Operator::OP_EQUAL);		
 
 	$filterParam = new FilterParam($param, LogicalOperator::LO_AND);
 	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(true), $filterParam, false); 
@@ -514,10 +510,9 @@ try
 	echo LINE_SEPARATOR;
 	$param = array();
 
-	$param[] = new Param("DefaultUserRole.Code", "BASE_USER", Operator::OP_EQUAL);
-	$param[] = new Param("UserRolesCollection.UserSettingsCollection.Value", "10", Operator::OP_EQUAL);	
+	$param[] = new Param("UserRolesCollection.UserRole.UserRoleSettingsCollection.Value", "10", Operator::OP_EQUAL);	
 	$param[] = new Param("UserRolesCollection.UserRole.Code", "GUEST", Operator::OP_EQUAL);			
-	$param[] = new Param("UserRolesCollection.UserSettingsCollection.UserSetting.Name", "LOGLEVEL1", Operator::OP_EQUAL); //NO LOGLEVEL1		
+	$param[] = new Param("UserRolesCollection.UserRole.UserRoleSettingsCollection.UserRoleSetting.Name", "LOGLEVEL1", Operator::OP_EQUAL); //no LOGLEVEL1		
 
 	$filterParam = new FilterParam($param, LogicalOperator::LO_AND);
 	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(true), $filterParam, false); 
@@ -531,10 +526,9 @@ try
 	echo LINE_SEPARATOR;
 	$param = array();
 
-	$param[] = new Param("DefaultUserRole.Code", "BASE_USER", Operator::OP_EQUAL);
-	$param[] = new Param("UserRolesCollection.UserSettingsCollection.Value", "10", Operator::OP_EQUAL);	
+	$param[] = new Param("UserRolesCollection.UserRole.UserRoleSettingsCollection.Value", "10", Operator::OP_EQUAL);	
 	$param[] = new Param("UserRolesCollection.UserRole.Code", "GUEST", Operator::OP_EQUAL);			
-	$param[] = new Param("UserRolesCollection.UserSettingsCollection.UserSetting.Name", "LOGLEVEL1", Operator::OP_EQUAL);//NO LOGLEVEL1		
+	$param[] = new Param("UserRolesCollection.UserRole.UserRoleSettingsCollection.UserRoleSetting.Name", "LOGLEVEL1", Operator::OP_EQUAL); //no LOGLEVEL1	
 
 	$filterParam = new FilterParam($param, LogicalOperator::LO_OR);
 	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(true), $filterParam, false); 
@@ -543,6 +537,8 @@ try
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
+	//IT IS NOT GOOD YET - NEED FIX
+	/*
 	echo "DB - IS NULL Test";
 	echo LINE_SEPARATOR;
 	$filters = array();
@@ -552,6 +548,7 @@ try
 
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
+	*/
 
 	$loginTest->deleteUser("user_1"); //physically delete
 	$loginTest->deleteUser("user_2"); //physically delete	

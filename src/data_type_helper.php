@@ -153,7 +153,7 @@ class CachedItem
 }
 
 class ItemAttribute
-{
+{   public $parent = null;
 	public $originalValue = null;
 	public $name = null;
 	public $caption = null;
@@ -250,25 +250,25 @@ class ItemAttribute
 			}
 			else if(is_object($val))
 			{	
-				$item = new ItemAttribute($val->name, $val->caption, $val->dataType, $val->dataFormat, $val->required, $val->readonly, $val->isVisible, $val->defaultValue, $val->defaultCaption);				
+				$itemAttribute = new ItemAttribute($val->name, $val->caption, $val->dataType, $val->dataFormat, $val->required, $val->readonly, $val->isVisible, $val->defaultValue, $val->defaultCaption);				
 				if ($val->dataType === DataType::DT_LIST || $val->dataType === DataType::DT_ITEM)
 				{
-					$item->setReferenceDescriptor($val->referenceDescriptor);
+					$itemAttribute->setReferenceDescriptor($val->referenceDescriptor);
 				}
 
 				if ($val->dataType !== DataType::DT_LIST)
 				{
-					$item->value = $val->value;			
-					$item->originalValue = $val->originalValue;
+					$itemAttribute->value = $val->value;			
+					$itemAttribute->originalValue = $val->originalValue;
 				}
 				else
 				{
-					$item->value = 	ItemAttribute::getSimpleCopiedItemAttributeArray($val->value);
-					$item->originalValue = ItemAttribute::getSimpleCopiedItemAttributeArray($val->originalValue);
+					$itemAttribute->value = ItemAttribute::getSimpleCopiedItemAttributeArray($val->value);
+					//HasChanges never check the list's originalValue attribute!
+					//$itemAttribute->originalValue = ItemAttribute::getSimpleCopiedItemAttributeArray($val->originalValue);
 				}
-				$item->orderByIndex = $val->orderByIndex;
-
-				$returnValue[$item->name] = $item;
+				$itemAttribute->orderByIndex = $val->orderByIndex;
+				$returnValue[$itemAttribute->name] = $itemAttribute;
 			}
 		}
 		return $returnValue;		

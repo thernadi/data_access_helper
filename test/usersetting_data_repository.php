@@ -8,10 +8,10 @@ include_once __DIR__."/../src/db_repository_base_pdo.php"; //PDO extension
 //include_once __DIR__."/../src/db_repository_base_mysqli.php"; //MySQLi extension
 
 //------------------------------------
-//UserSetting repository implementations
+//UserRoleSetting repository implementations
 //------------------------------------
 
-class DbUserSettingRepository extends DbRepository
+class DbUserRoleSettingRepository extends DbRepository
 {
 	public function __construct($connectionData, $useItemCache = false, $cacheIdProperty = "Id")
 	{
@@ -20,7 +20,7 @@ class DbUserSettingRepository extends DbRepository
 		ItemAttribute::with_Name_Caption_DataType("Name", "Name", DataType::DT_STRING), //req
 		ItemAttribute::with_Name_Caption_DataType("DefaultValue", "Default value", DataType::DT_STRING),		
 		ItemAttribute::with_Name_Caption_DataType_DefaultValue("IsDeleted", "Is deleted", DataType::DT_INT, 0));		
-		parent::__construct($connectionData, "UserSetting", $itemAttributes, $useItemCache, $cacheIdProperty);
+		parent::__construct($connectionData, "UserRoleSetting", $itemAttributes, $useItemCache, $cacheIdProperty);
 	}
 }
 

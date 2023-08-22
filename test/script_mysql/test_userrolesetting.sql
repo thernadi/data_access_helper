@@ -18,29 +18,20 @@ USE `test`;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `usersetting`
+-- Table structure for table `userrolesetting`
 --
 
-DROP TABLE IF EXISTS `usersetting`;
+DROP TABLE IF EXISTS `userrolesetting`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `usersetting` (
+CREATE TABLE `userrolesetting` (
   `Id` int NOT NULL AUTO_INCREMENT,
   `Name` varchar(100) NOT NULL,
   `DefaultValue` varchar(100) DEFAULT NULL,
   `IsDeleted` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`Id`)
-) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=598 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `usersetting`
---
-
-LOCK TABLES `usersetting` WRITE;
-/*!40000 ALTER TABLE `usersetting` DISABLE KEYS */;
-/*!40000 ALTER TABLE `usersetting` ENABLE KEYS */;
-UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -51,4 +42,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2023-06-18  8:54:13
+-- Dump completed on 2023-08-18 22:49:20
