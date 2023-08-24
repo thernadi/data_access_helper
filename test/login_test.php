@@ -65,7 +65,7 @@ class LoginTest
 	{	
 		try
 		{	
-			//UserSetting
+			//UserRoleSetting
 			$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->beginTransaction();
 
 			$filters = array();
@@ -280,9 +280,9 @@ class LoginTest
 				echo LINE_SEPARATOR;	
 				echo $userRoleCollectionItem["UserRole"]->value["Code"]->value.":";
 				echo LINE_SEPARATOR;
-				foreach($userRoleCollectionItem["UserRole"]->value["UserRoleSettingsCollection"]->value as $userRoleUserSettingCollectionItem)
+				foreach($userRoleCollectionItem["UserRole"]->value["UserRoleSettingsCollection"]->value as $userRoleUserRoleSettingCollectionItem)
 				{	
-					echo $userRoleUserSettingCollectionItem["UserRoleSetting"]->value["Name"]->value." -> ".$userRoleUserSettingCollectionItem["Value"]->value;
+					echo $userRoleUserRoleSettingCollectionItem["UserRoleSetting"]->value["Name"]->value." -> ".$userRoleUserRoleSettingCollectionItem["Value"]->value;
 					echo LINE_SEPARATOR;
 				}
 			}
@@ -385,9 +385,9 @@ try
 	}
 
 	$loginTest->deleteUserData(); //User and related data deleting
-	$loginTest->deleteUserRelatedBaseData(); //UserRole + UserSetting deleting
+	$loginTest->deleteUserRelatedBaseData(); //UserRole + UserRoleSetting deleting
 
-	$loginTest->createUserRelatedBaseData(); //UserRole + UserSetting creating
+	$loginTest->createUserRelatedBaseData(); //UserRole + UserRoleSetting creating
 	
 	//Build cache
 	echo "Using cached items:".LINE_SEPARATOR;
@@ -397,31 +397,31 @@ try
 	$userRoleItem = $dbUserRoleRepository->getItemFromCache("GUEST");
 	echo LINE_SEPARATOR;
 	echo $userRoleItem["Name"]->value.LINE_SEPARATOR;
-	$userSettingItem = $dbUserRoleSettingRepository->getItemFromCache("ACTIVE");
-	echo $userSettingItem["Name"]->value.LINE_SEPARATOR;
+	$userRoleSettingItem = $dbUserRoleSettingRepository->getItemFromCache("ACTIVE");
+	echo $userRoleSettingItem["Name"]->value.LINE_SEPARATOR;
 
-	//Add new usersetting items to itemCache
-	$userSettingItem = $dbUserRoleSettingRepository->getNewItemInstance();
-	$userSettingItem["Name"]->value = "TEST1";
-	$userSettingItem["DefaultValue"]->value = "TEST1";
-	$dbUserRoleSettingRepository->addItemToCache($userSettingItem);
-	$userSettingItem = $dbUserRoleSettingRepository->getItemFromCache("TEST1");
-	echo $userSettingItem["Name"]->value."(Id: ".$userSettingItem["Id"]->value.")".LINE_SEPARATOR;
+	//Add new userRoleSetting items to itemCache
+	$userRoleSettingItem = $dbUserRoleSettingRepository->getNewItemInstance();
+	$userRoleSettingItem["Name"]->value = "TEST1";
+	$userRoleSettingItem["DefaultValue"]->value = "TEST1";
+	$dbUserRoleSettingRepository->addItemToCache($userRoleSettingItem);
+	$userRoleSettingItem = $dbUserRoleSettingRepository->getItemFromCache("TEST1");
+	echo $userRoleSettingItem["Name"]->value."(Id: ".$userRoleSettingItem["Id"]->value.")".LINE_SEPARATOR;
 
-	$userSettingItem = $dbUserRoleSettingRepository->getNewItemInstance();
-	$userSettingItem["Name"]->value = "TEST2";
-	$userSettingItem["DefaultValue"]->value = "TEST2";
-	$dbUserRoleSettingRepository->addItemToCache($userSettingItem);
-	$userSettingItem = $dbUserRoleSettingRepository->getItemFromCache("TEST2");
-	echo $userSettingItem["Name"]->value."(Id: ".$userSettingItem["Id"]->value.")".LINE_SEPARATOR;
+	$userRoleSettingItem = $dbUserRoleSettingRepository->getNewItemInstance();
+	$userRoleSettingItem["Name"]->value = "TEST2";
+	$userRoleSettingItem["DefaultValue"]->value = "TEST2";
+	$dbUserRoleSettingRepository->addItemToCache($userRoleSettingItem);
+	$userRoleSettingItem = $dbUserRoleSettingRepository->getItemFromCache("TEST2");
+	echo $userRoleSettingItem["Name"]->value."(Id: ".$userRoleSettingItem["Id"]->value.")".LINE_SEPARATOR;
 	
-	//Save new usersetting items to DB
+	//Save new userRoleSetting items to DB
 	$dbUserRoleSettingRepository->saveCache();
 	
-	$userSettingItem = $dbUserRoleSettingRepository->getItemFromCache("TEST1");
-	echo $userSettingItem["Name"]->value."(Id: ".$userSettingItem["Id"]->value.")".LINE_SEPARATOR;
-	$userSettingItem = $dbUserRoleSettingRepository->getItemFromCache("TEST2");
-	echo $userSettingItem["Name"]->value."(Id: ".$userSettingItem["Id"]->value.")".LINE_SEPARATOR;
+	$userRoleSettingItem = $dbUserRoleSettingRepository->getItemFromCache("TEST1");
+	echo $userRoleSettingItem["Name"]->value."(Id: ".$userRoleSettingItem["Id"]->value.")".LINE_SEPARATOR;
+	$userRoleSettingItem = $dbUserRoleSettingRepository->getItemFromCache("TEST2");
+	echo $userRoleSettingItem["Name"]->value."(Id: ".$userRoleSettingItem["Id"]->value.")".LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
 	//Find test #1
@@ -495,7 +495,24 @@ try
 	$param = array();
 
 	$param[] = new Param("UserRolesCollection.UserRole.Code", "BASE_USER", Operator::OP_EQUAL);		
-	$param[] = new Param("UserRolesCollection.UserRole.UserRoleSettingsCollection.Value", "3", Operator::OP_EQUAL);		
+	$param[] = new Param("UserRolesCollection.UserRole.UserRoleSettingsCollection.UserRoleSetting.Name", "LOGLEVEL", Operator::OP_EQUAL);	
+	$param[] = new Param("UserRolesCollection.UserRole.UserRoleSettingsCollection.Value", "3", Operator::OP_EQUAL);			
+
+	$filterParam = new FilterParam($param, LogicalOperator::LO_AND);
+	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(true), $filterParam, false); 
+	echo "count: ".count($foundItems);
+
+	echo LINE_SEPARATOR;
+	echo LINE_SEPARATOR;
+
+	//Find test #6: any user who has "BASE_USER" UserRole and has "LOGLEVEL" = 10 setting //0 user items
+	//DbUserRepository.depth = 2, if you set it to 0 you cannot get the correct result
+	echo "Finding item test #6";
+	echo LINE_SEPARATOR;
+	$param = array();
+
+	$param[] = new Param("UserRolesCollection.UserRole.Code", "BASE_USER", Operator::OP_EQUAL);		
+	$param[] = new Param("UserRolesCollection.UserRole.UserRoleSettingsCollection.Value", "10", Operator::OP_EQUAL);		
 	$param[] = new Param("UserRolesCollection.UserRole.UserRoleSettingsCollection.UserRoleSetting.Name", "LOGLEVEL", Operator::OP_EQUAL);		
 
 	$filterParam = new FilterParam($param, LogicalOperator::LO_AND);
@@ -505,8 +522,8 @@ try
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
-	//Find test #6:
-	echo "Finding item test #6";
+	//Find test #7:
+	echo "Finding item test #7";
 	echo LINE_SEPARATOR;
 	$param = array();
 
@@ -521,8 +538,8 @@ try
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
-	//Find test #7:
-	echo "Finding item test #7";
+	//Find test #8:
+	echo "Finding item test #8";
 	echo LINE_SEPARATOR;
 	$param = array();
 

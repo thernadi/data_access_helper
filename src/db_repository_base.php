@@ -19,6 +19,9 @@ trait DbRepositoryBase
 	protected $cacheIdProperty = null;
 	protected  $itemCache = null;
 
+	public $depth = 1; //Override a larger value in derived DBRepository if structure contains more "DT_LIST.DT_LIST" levels.
+	//For example #1: "Collection1.Collection2.Item1.Collection3.Item2" -> depth = 3  
+	//For example #2: "Collection1.Item1.Collection2.Item2" -> depth = 2  
 
 	public function __construct($connectionData, $tbl, $itemAttributes, $useItemCache = false, $cacheIdProperty = "Id")
 	{
@@ -797,11 +800,7 @@ trait DbRepositoryBase
 					if ($this->compareValues($itemAttribute->value, $param->value, $param->operator))										
 					{
 						$submatch++;		
-						$paramNameExploded = explode(".", $param->name);
-						if (count($paramNameExploded) > 1)
-						{
-							$this->applyFiltersForListAttribute($itemAttribute, $itemAttribute);		
-						}
+						$this->applyFiltersForListAttribute($itemAttribute, $itemAttribute);		
 					}
 				}										
 				
@@ -884,16 +883,11 @@ trait DbRepositoryBase
 		}
 	}
 
-	//We need only the the most nearest DT_LIST attribute only. (Top level not needed!)
-	private function applyFiltersForListAttribute($attribute, $childAttribute) 
+	//We need the the most nearest DT_LIST attribute by the set depth.
+	private function applyFiltersForListAttribute($attribute, $childAttribute, &$depth = 0) 
 	{		
-		$returnValue = false;
-		while(!$returnValue && $attribute !== null && $attribute->dataType !== DataType::DT_LIST)
-		{					
-			$returnValue = $this->applyFiltersForListAttribute($attribute->parent, $attribute);	
-		}
-
-		if (!$returnValue && $attribute !== null)
+		$returnValue = true; 
+		if ($attribute !== null && $attribute->dataType === DataType::DT_LIST)
 		{
 			for($i = count($attribute->value) - 1; $i >= 0; $i--)
 			{
@@ -918,12 +912,18 @@ trait DbRepositoryBase
 			{
 				$reIndexedAttributeArray[] = $value; 
 			}
-			$attribute->value = $reIndexedAttributeArray;
-
-			$returnValue = true;
+			$attribute->value = $reIndexedAttributeArray;	
+			$depth++;
+		}
+		else if ($attribute === null) 
+		{
+			return false;
 		}
 
-		return $returnValue;
+		while($returnValue && $attribute !== null && $depth !== $this->depth)
+		{		
+			$returnValue = $this->applyFiltersForListAttribute($attribute->parent, $attribute, $depth);			
+		}
 		
 	}
 

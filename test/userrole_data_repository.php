@@ -6,13 +6,13 @@ use Rasher\Data\Type\{DataType,ReferenceDescriptor,ItemAttribute};
 
 include_once __DIR__."/../src/db_repository_base_pdo.php"; //PDO extension
 //include_once __DIR__."/../src/db_repository_base_mysqli.php"; //MySQLi extension
-
+include_once __DIR__."/userrolesetting_data_repository.php";
 //------------------------------------
 //UserRole repository implementations
 //------------------------------------
 
 class DbUserRoleRepository extends DbRepository
-{
+{	
 	public $dbUserRoleSettingRepository = null;
 
 	public function __construct($connectionData, $dbUserRoleSettingRepository, $useItemCache = false, $cacheIdProperty = "Id")

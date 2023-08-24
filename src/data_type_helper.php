@@ -153,7 +153,8 @@ class CachedItem
 }
 
 class ItemAttribute
-{   public $parent = null;
+{   
+	public $parent = null;
 	public $originalValue = null;
 	public $name = null;
 	public $caption = null;
