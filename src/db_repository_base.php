@@ -19,7 +19,7 @@ trait DbRepositoryBase
 	protected $cacheIdProperty = null;
 	protected  $itemCache = null;
 
-	public $depth = 1; //Override a larger value in derived DBRepository if structure contains more "DT_LIST.DT_LIST" levels.
+	public $depth = 1; //Override a larger value in derived DBRepository if structure contains more "DT_LIST" levels.
 	//For example #1: "Collection1.Collection2.Item1.Collection3.Item2" -> depth = 3  
 	//For example #2: "Collection1.Item1.Collection2.Item2" -> depth = 2  
 
@@ -800,7 +800,7 @@ trait DbRepositoryBase
 					if ($this->compareValues($itemAttribute->value, $param->value, $param->operator))										
 					{
 						$submatch++;		
-						$this->applyFiltersForListAttribute($itemAttribute, $itemAttribute);		
+						$this->applyFiltersForListAttribute($itemAttribute, $itemAttribute, $itemAttribute->name, $param);		
 					}
 				}										
 				
@@ -884,7 +884,7 @@ trait DbRepositoryBase
 	}
 
 	//We need the the most nearest DT_LIST attribute by the set depth.
-	private function applyFiltersForListAttribute($attribute, $childAttribute, &$depth = 0) 
+	private function applyFiltersForListAttribute($attribute, $childAttribute, $lastAttributeName, $param, &$depth = 0) 
 	{		
 		$returnValue = true; 
 		if ($attribute !== null && $attribute->dataType === DataType::DT_LIST)
@@ -893,14 +893,25 @@ trait DbRepositoryBase
 			{
 				if ($childAttribute->dataType === DataType::DT_ITEM)
 				{
-					if ($attribute->value[$i][$childAttribute->name]->value["Id"]->value !== $childAttribute->value["Id"]->value)
+					if ($depth > 0)
 					{
-						unset($attribute->value[$i]);
+						if ($attribute->value[$i][$childAttribute->name]->value["Id"]->value !== $childAttribute->value["Id"]->value)
+						{
+							unset($attribute->value[$i]);
+						}
+					}
+					else
+					{
+						if (!$this->compareValues($attribute->value[$i][$childAttribute->name]->value[$lastAttributeName]->value, $param->value, $param->operator))
+						{
+							unset($attribute->value[$i]);
+						}
 					}
 				}
-				else
+				else //check values  
+				//TODO: DT_LIST has DT_LIST
 				{
-					if ($attribute->value[$i][$childAttribute->name]->value !== $childAttribute->value)
+					if (!$this->compareValues($attribute->value[$i][$childAttribute->name]->value, $param->value, $param->operator))
 					{
 						unset($attribute->value[$i]);
 					}
@@ -922,7 +933,7 @@ trait DbRepositoryBase
 
 		while($returnValue && $attribute !== null && $depth !== $this->depth)
 		{		
-			$returnValue = $this->applyFiltersForListAttribute($attribute->parent, $attribute, $depth);			
+			$returnValue = $this->applyFiltersForListAttribute($attribute->parent, $attribute, $lastAttributeName, $param, $depth);			
 		}
 		
 	}

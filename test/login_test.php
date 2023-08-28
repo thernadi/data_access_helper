@@ -460,6 +460,10 @@ try
 	$userRoleCollectionItemArray = array(
 	$loginTest->getNewUserRoleCollectionItem("BASE_USER"));
 	$loginTest->registerNewUser("user_2", "123", $userRoleCollectionItemArray);
+	$userRoleCollectionItemArray = array(
+	$loginTest->getNewUserRoleCollectionItem("ADMIN"));
+	$loginTest->registerNewUser("admin", "admin", $userRoleCollectionItemArray);
+
 
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
@@ -494,7 +498,7 @@ try
 	echo LINE_SEPARATOR;
 	$param = array();
 
-	$param[] = new Param("UserRolesCollection.UserRole.Code", "BASE_USER", Operator::OP_EQUAL);		
+	$param[] = new Param("UserRolesCollection.UserRole.Code","BASE_USER", Operator::OP_EQUAL);		
 	$param[] = new Param("UserRolesCollection.UserRole.UserRoleSettingsCollection.UserRoleSetting.Name", "LOGLEVEL", Operator::OP_EQUAL);	
 	$param[] = new Param("UserRolesCollection.UserRole.UserRoleSettingsCollection.Value", "3", Operator::OP_EQUAL);			
 
