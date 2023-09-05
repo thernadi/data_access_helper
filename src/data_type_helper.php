@@ -1,7 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
 //Data Type Helper
-//Current version: 2.35
+//Current version: 2.40
 
 namespace Rasher\Data\Type;
 

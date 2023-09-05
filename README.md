@@ -21,7 +21,9 @@ Currently, it can:
 
 - Caching the database query results
 
-- Filtering abilities: There are several comparing operators for filtering data. The repository items can be filtered by "AND" logical operator from database. The repository items can be filtered by "OR" or "AND" after getting them from database. 
+- Comparison operators to define filtering conditions
+
+- Execute stored procedure + test (with PDO - MSSQL), data generation test
 
 //LATER DEVELOPMENT PHASE
 - Concurrent data managing

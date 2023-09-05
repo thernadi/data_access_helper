@@ -1,7 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
 //Data Access Layer Helper for access Databases using PDO extension
-//Current version: 2.35
+//Current version: 2.40
 
 namespace Rasher\Data\PDO\DataManagement;
 use Rasher\Data\DataManagement\{DataAccessLayerHelperBase,BindingParam};
@@ -103,13 +103,17 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 		{
 			$this->open();
 			$result = $this->pdo->query($this->transformQueryToDBSpecific($query), PDO::FETCH_ASSOC);
-			if (str_starts_with(trim(strtoupper($query)), "SELECT"))
+			//if (str_starts_with(trim(strtoupper($query)), "SELECT"))
+			try
 			{
 				foreach($result as $row)
 				{
 					$returnValue[] = $row;
 				}
 			}
+			catch(\Throwable $e){}
+
+
 			$this->close();
 		}
 		catch (\Throwable $e)
@@ -126,11 +130,11 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	*
 	*/
 	public function transformQueryToDBSpecific($query)
-	{	
+	{			
 		$returnValue = strtoupper($query);
 		$driverName = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 		if ($driverName === "sqlsrv")//MSSQL SERVER
-		{
+		{			
 			$reserved = array("USER" => "[USER]");
 			foreach($reserved as $key => $val)
 			{
@@ -162,13 +166,13 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 				$stmt->bindValue($i, $params[$i-1]->value, $params[$i-1]->type);
 			}
 			$stmt->execute();		
-			if (str_starts_with(trim(strtoupper($query)), "SELECT"))
+
+			//if (str_starts_with(trim(strtoupper($query)), "SELECT"))
+			try
 			{
-				foreach($stmt->fetchAll(PDO::FETCH_ASSOC) as $row)
-				{
-					$returnValue[] = $row;
-				}
+				$returnValue = $stmt->fetchAll(PDO::FETCH_ASSOC);
 			}
+			catch(\Throwable $e){}
 			
 			if (count($returnValue) === 0 && $item !== null)
 			{

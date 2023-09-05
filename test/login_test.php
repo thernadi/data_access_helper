@@ -348,6 +348,18 @@ class LoginTest
 			echo "$loginName user deleted!".LINE_SEPARATOR;
 		}
 	}
+
+	public function generateUsers($count, $startIndex = 1)
+	{
+		for($i = $startIndex; $i < ($startIndex + $count); $i++)
+		{
+			$userRoleCollectionItemArray = array(
+			$this->getNewUserRoleCollectionItem("BASE_USER"),
+			$this->getNewUserRoleCollectionItem("GUEST"));
+			$this->registerNewUser("user_$i", "123", $userRoleCollectionItemArray);
+		}
+	}
+
 }
 
 try
@@ -369,7 +381,7 @@ try
 	$dbUserRoleRepository = new DbUserRoleRepository($connectionData,$dbUserRoleSettingRepository, true, "Code"); //Caching by Code
 	
 	//DbUserRepository single instance
-	$dbUserRepository = new DbUserRepository($connectionData, $dbUserRoleRepository, true);
+	$dbUserRepository = new DbUserRepository($connectionData, $dbUserRoleRepository); //default no cache
 
 	$loginTest = new LoginTest($dbUserRepository);
 	//Comment out if you want to modify this class for several times!
@@ -384,10 +396,19 @@ try
 		$loginTest = json_decode($loginTest); 
 	}
 
+
 	$loginTest->deleteUserData(); //User and related data deleting
 	$loginTest->deleteUserRelatedBaseData(); //UserRole + UserRoleSetting deleting
 
 	$loginTest->createUserRelatedBaseData(); //UserRole + UserRoleSetting creating
+
+	//TEST DATA generation: creating 500 users
+	$loginTest->generateUsers(500, 3);
+
+
+	//Caching will be slow when you have much more data!!!
+	//It is important to overthink you really need caching.
+	$dbUserRepository = new DbUserRepository($connectionData, $dbUserRoleRepository, true);
 	
 	//Build cache
 	echo "Using cached items:".LINE_SEPARATOR;
@@ -493,7 +514,7 @@ try
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
-	//Find test #5: any user who has "BASE_USER" UserRole and has "LOGLEVEL" = 3 setting //2 user items
+	//Find test #5: any user who has "BASE_USER" UserRole and has "LOGLEVEL" = 3 setting
 	echo "Finding item test #5";
 	echo LINE_SEPARATOR;
 	$param = array();
@@ -509,7 +530,7 @@ try
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
 
-	//Find test #6: any user who has "BASE_USER" UserRole and has "LOGLEVEL" = 10 setting //0 user items
+	//Find test #6: any user who has "BASE_USER" UserRole and has "LOGLEVEL" = 10 setting
 	//DbUserRepository.depth = 2, if you set it to 0 you cannot get the correct result
 	echo "Finding item test #6";
 	echo LINE_SEPARATOR;
@@ -571,8 +592,10 @@ try
 	echo LINE_SEPARATOR;
 	*/
 
+	//Testing user's delete
 	$loginTest->deleteUser("user_1"); //physically delete
-	$loginTest->deleteUser("user_2"); //physically delete	
+	$loginTest->deleteUser("user_2"); //physically delete
+	
 }
 catch(\Throwable $e)
 {

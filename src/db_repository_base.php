@@ -1,7 +1,7 @@
 <?php
 //Copyright (c) 2022 Tamas Hernadi
 //Db Repository Base
-//Current version: 2.35
+//Current version: 2.40
 
 namespace Rasher\Data\DataManagement;
 use Rasher\Data\Type\{DataType,LogicalOperator,Operator,Param,FilterParam,ReferenceDescriptor,ItemAttribute,CachedItem};
@@ -883,7 +883,7 @@ trait DbRepositoryBase
 		}
 	}
 
-	//We need the the most nearest DT_LIST attribute by the set depth.
+	//We need the the most top DT_LIST attribute by the set depth.
 	private function applyFiltersForListAttribute($attribute, $childAttribute, $lastAttributeName, $param, &$depth = 0) 
 	{		
 		$returnValue = true; 
