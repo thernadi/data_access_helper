@@ -1000,8 +1000,8 @@ trait HistoricalTable
 			ItemAttribute::with_Name_Caption_DataType("TechnicalId", "Technical Id", DataType::DT_INT), //req, pk, autoinc
 			ItemAttribute::with_Name_Caption_DataType("Id", "Id", DataType::DT_INT), //When it is null in first time the autoinc "Technical Id" will be set into "Id" by DB trigger
 			ItemAttribute::with_Name_Caption_DataType_DefaultValue("IsDeleted", "Is deleted", DataType::DT_INT, 0),	
-			ItemAttribute::with_Name_Caption_DataType_DataFormat("ValidFrom", "Valid from", DataType::DT_DATETIME,"Y-m-d H:i:s"), //req	
-			ItemAttribute::with_Name_Caption_DataType_DataFormat("ValidTo", "Valid to", DataType::DT_DATETIME)), $itemAttributes);	
+			ItemAttribute::with_Name_Caption_DataType_DataFormat("ValidFrom", "Valid from", DataType::DT_DATETIME, "Y-m-d H:i:s"), //req	
+			ItemAttribute::with_Name_Caption_DataType_DataFormat("ValidTo", "Valid to", DataType::DT_DATETIME, "Y-m-d H:i:s")), $itemAttributes);	
 		return $historicalTableItemAttributesBase;
 	}
 }
