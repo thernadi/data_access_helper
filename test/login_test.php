@@ -578,10 +578,8 @@ try
 
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
-
-	//IT IS NOT GOOD YET - NEED FIX
-	/*
-	echo "DB - IS NULL Test";
+	
+	echo "DB - IS NULL Test #1";
 	echo LINE_SEPARATOR;
 	$filters = array();
 	$filters[] = new Param("LastLoginDateTime", null, Operator::OP_IS_NULL);
@@ -590,7 +588,16 @@ try
 
 	echo LINE_SEPARATOR;
 	echo LINE_SEPARATOR;
-	*/
+	
+	echo "DB - IS NOT NULL Test #2";
+	echo LINE_SEPARATOR;
+	$filters = array();
+	$filters[] = new Param("LastLoginDateTime", null, Operator::OP_IS_NOT_NULL);
+	$users = $dbUserRepository->LoadByFilter2($filters);
+	echo "count: ".count($users);
+
+	echo LINE_SEPARATOR;
+	echo LINE_SEPARATOR;
 
 	//Testing user's delete
 	$loginTest->deleteUser("user_1"); //physically delete

@@ -460,18 +460,42 @@ trait DbRepositoryBase
 		if ($filters !== null && count($filters) > 0)
 		{
 			$query .=" WHERE ";
-			foreach ($filters as $filter)
+
+
+			$checkIsNull_IsNotNull = false;
+			foreach($filters as $filter)
 			{
-			 	$operator = Operator::getOperatorForDB($filter->operator);
-				if ($operator !== "IS NULL")
+				$operator = Operator::getOperatorForDB($filter->operator);
+				if ($operator !== "IS NULL" &&  $operator !== "IS NOT NULL" )
 				{
 					$query .= $filter->name." $operator ? AND ";
 				}
-				else
+				else //"IS NULL" OR "IS NOT NULL"
 				{
 					$query .= $filter->name." $operator AND ";
+					$checkIsNull_IsNotNull = true;
 				}	
 			}
+
+			if ($checkIsNull_IsNotNull)
+			{
+				for($i = count($filters) - 1; $i >= 0 ; $i--)
+				{
+					$operator = Operator::getOperatorForDB($filters[$i]->operator);
+					if ($operator === "IS NULL" || $operator === "IS NOT NULL")
+					{
+						unset($filters[$i]);
+					}	
+				}
+
+				$filters_new = array();
+				foreach($filters as $filter)
+				{
+					$filters_new[] = $filter; 
+				}
+				$filters = $filters_new;	
+			}
+
 			$query = substr($query, 0, strlen($query) - 4);
 		}
 		else
@@ -940,4 +964,45 @@ trait DbRepositoryBase
 
 }
 
+abstract class TableType
+{
+	const TT_SIMPLE = 1; 
+	const TT_HISTORICAL = 2;
+}
+
+trait SimpleTable
+{
+	protected function getTableType()
+	{
+		return TableType::TT_SIMPLE;
+	}
+
+	protected function getTableBaseItemAttributes($itemAttributes)
+	{
+		$simpleTableItemAttributesBase = array_merge(array(
+			ItemAttribute::with_Name_Caption_DataType("Id", "Id", DataType::DT_INT), //req, pk, autoinc
+			ItemAttribute::with_Name_Caption_DataType_DefaultValue("IsDeleted", "Is deleted", DataType::DT_INT, 0)), $itemAttributes);
+		return $simpleTableItemAttributesBase;
+	}
+}
+
+//TODO LATER:
+trait HistoricalTable
+{
+	protected function getTableType()
+	{
+		return TableType::TT_HISTORICAL;
+	}
+
+	protected function getTableBaseItemAttributes($itemAttributes)
+	{
+		$historicalTableItemAttributesBase = array_merge(array(
+			ItemAttribute::with_Name_Caption_DataType("TechnicalId", "Technical Id", DataType::DT_INT), //req, pk, autoinc
+			ItemAttribute::with_Name_Caption_DataType("Id", "Id", DataType::DT_INT), //When it is null in first time the autoinc "Technical Id" will be set into "Id" by DB trigger
+			ItemAttribute::with_Name_Caption_DataType_DefaultValue("IsDeleted", "Is deleted", DataType::DT_INT, 0),	
+			ItemAttribute::with_Name_Caption_DataType_DataFormat("ValidFrom", "Valid from", DataType::DT_DATETIME,"Y-m-d H:i:s"), //req	
+			ItemAttribute::with_Name_Caption_DataType_DataFormat("ValidTo", "Valid to", DataType::DT_DATETIME)), $itemAttributes);	
+		return $historicalTableItemAttributesBase;
+	}
+}
 ?>

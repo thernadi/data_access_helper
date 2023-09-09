@@ -32,6 +32,7 @@ abstract class Operator
 	const OP_LIKE = 7; //the joker character is %
 	const OP_NOT_LIKE = 8; //the joker character is %
 	const OP_IS_NULL = 9; //DB specific only
+	const OP_IS_NOT_NULL = 10; //DB specific only
 
 	public static function getOperatorForDB($operator)
 	{
@@ -64,7 +65,10 @@ abstract class Operator
 				break;						
 			case Operator::OP_IS_NULL:
 				$returnValue = "IS NULL";
-				break;						
+				break;		
+			case Operator::OP_IS_NOT_NULL:
+				$returnValue = "IS NOT NULL";
+				break;											
 			default:
 				$returnValue = "=";					
 		}

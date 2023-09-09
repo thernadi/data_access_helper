@@ -26,8 +26,8 @@ Currently, it can:
 - Execute stored procedure + test (with PDO - MSSQL), data generation test
 
 //LATER DEVELOPMENT PHASE
-- Concurrent data managing
 - Database table script generation by the described attributes
+- Concurrent data managing
 - Historical data handling with DBHistoricalRepository
 
 - Better function and parameters description
