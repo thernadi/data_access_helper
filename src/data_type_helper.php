@@ -113,18 +113,19 @@ class Param
 }
 
 //$logicalOperator : LogicalOperator
-//$paramArray: Param array
-class FilterParam 
+//$params: Param array
+class FilterParam
 {
-	public $paramArray = null;
-	public $logicalOperator = null;	
+    public $paramArray;
+    public $logicalOperator;
 
-	public function __construct($paramArray, $logicalOperator = null)
-	{
-		$this->paramArray = $paramArray;
-		$this->logicalOperator = $logicalOperator;
-	}
+    public function __construct(array $params, $logicalOperator = null)
+    {
+        $this->paramArray = $params;
+        $this->logicalOperator = $logicalOperator;
+    }
 }
+
 
 class ReferenceDescriptor
 {
@@ -246,7 +247,12 @@ class ItemAttribute
 	//$array: ItemAttribute array
 	public static function getSimpleCopiedItemAttributeArray($array)
 	{
+		if ($array === null)
+		{
+			return array();
+		}
 		$returnValue = array();
+		
 		foreach($array as $val) 
 		{
 			if(is_array($val))

@@ -15,8 +15,7 @@ include_once __DIR__."/userrole_data_repository.php";
 class DbUserRepository extends DbRepository
 {
 	use SimpleTable;
-
-	public $depth = 2;
+	
 	public $dbUserRoleRepository = null;
 
 	public function __construct($connectionData, $dbUserRoleRepository, $useItemCache = false, $cacheIdProperty = "Id")
@@ -29,10 +28,10 @@ class DbUserRepository extends DbRepository
 			ItemAttribute::with_Name_Caption_DataType_DataFormat("LastLoginDateTime", "Last login datetime", DataType::DT_DATETIME, "Y-m-d H:i:s"),
 			ItemAttribute::with_Name_Caption_DataType_DefaultValue("IsLogged", "Is logged", DataType::DT_INT, 0),					
 			ItemAttribute::with_Name_Caption_DataType("UserRolesCollection", "User roles collection", DataType::DT_LIST)));
-		parent::__construct($connectionData, "User", $itemAttributes, $useItemCache, $cacheIdProperty);
+		parent::__construct($connectionData, "user", $itemAttributes, $useItemCache, $cacheIdProperty);
 
 		$ItemAttribute = ItemAttribute::getItemAttribute($this->itemAttributes, "UserRolesCollection");
-		$ItemAttribute->setReferenceDescriptor(new ReferenceDescriptor("User", "User_UserRolesCollection", $this->itemAttributes, $this->getUserUserRolesCollectionItemAttributes(), "Id", "User"));
+		$ItemAttribute->setReferenceDescriptor(new ReferenceDescriptor("user", "user_userrolescollection", $this->itemAttributes, $this->getUserUserRolesCollectionItemAttributes(), "Id", "User"));
 	}
 
 	public function getUserUserRolesCollectionItemAttributes()
@@ -42,13 +41,13 @@ class DbUserRepository extends DbRepository
 			ItemAttribute::with_Name_Caption_DataType("UserRole", "User role", DataType::DT_ITEM))); //req											
 	
 		$ItemAttribute = ItemAttribute::getItemAttribute($returnValue, "UserRole");
-		$ItemAttribute->setReferenceDescriptor(new ReferenceDescriptor("User_UserRolesCollection", "UserRole", $returnValue, $this->dbUserRoleRepository->itemAttributes, "UserRole", "Id"));
+		$ItemAttribute->setReferenceDescriptor(new ReferenceDescriptor("user_userrolescollection", "userrole", $returnValue, $this->dbUserRoleRepository->itemAttributes, "UserRole", "Id"));
 		return $returnValue;
 	}
 
 	public function deleteAll_User_UserRolesCollection()
 	{
-		$query = "DELETE FROM User_UserRolesCollection";
+		$query = "DELETE FROM user_userrolescollection";
 		$params = array();
 		$this->execute($query, $this->convertParamArrayToDBSpecificParamArray($params));
 	}

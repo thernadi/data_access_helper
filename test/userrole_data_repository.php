@@ -26,10 +26,10 @@ class DbUserRoleRepository extends DbRepository
 		ItemAttribute::with_Name_Caption_DataType("Code", "Code", DataType::DT_STRING), //req
 		ItemAttribute::with_Name_Caption_DataType("Name", "Name", DataType::DT_STRING), //req
 		ItemAttribute::with_Name_Caption_DataType("UserRoleSettingsCollection", "User role settings collection", DataType::DT_LIST)));		
-		parent::__construct($connectionData, "UserRole", $itemAttributes, $useItemCache, $cacheIdProperty);
+		parent::__construct($connectionData, "userrole", $itemAttributes, $useItemCache, $cacheIdProperty);
 
 		$ItemAttribute = ItemAttribute::getItemAttribute($this->itemAttributes, "UserRoleSettingsCollection");
-		$ItemAttribute->setReferenceDescriptor(new ReferenceDescriptor("UserRole", "UserRole_UserRoleSettingsCollection", $this->itemAttributes, $this->getUserRoleUserRoleSettingsCollectionItemAttributes(), "Id", "UserRole"));
+		$ItemAttribute->setReferenceDescriptor(new ReferenceDescriptor("userrole", "userrole_userrolesettingscollection", $this->itemAttributes, $this->getUserRoleUserRoleSettingsCollectionItemAttributes(), "Id", "UserRole"));
 
 	}
 
@@ -41,14 +41,14 @@ class DbUserRoleRepository extends DbRepository
 		ItemAttribute::with_Name_Caption_DataType("Value", "Value", DataType::DT_STRING)));
 
 		$ItemAttribute = ItemAttribute::getItemAttribute($returnValue, "UserRoleSetting");
-		$ItemAttribute->setReferenceDescriptor(new ReferenceDescriptor("UserRole_UserRoleSettingsCollection", "UserRoleSetting", $returnValue, $this->dbUserRoleSettingRepository->itemAttributes, "UserRoleSetting", "Id"));
+		$ItemAttribute->setReferenceDescriptor(new ReferenceDescriptor("userrole_userrolesettingscollection", "userrolesetting", $returnValue, $this->dbUserRoleSettingRepository->itemAttributes, "UserRoleSetting", "Id"));
 
 		return $returnValue;
 	}
 
 	public function deleteAll_UserRole_UserRoleSettingsCollection()
 	{
-		$query = "DELETE FROM UserRole_UserRoleSettingsCollection";
+		$query = "DELETE FROM userrole_userrolesettingscollection";
 		$params = array();
 		$this->execute($query, $this->convertParamArrayToDBSpecificParamArray($params));
 	}

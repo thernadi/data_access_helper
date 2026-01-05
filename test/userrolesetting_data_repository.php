@@ -21,7 +21,7 @@ class DbUserRoleSettingRepository extends DbRepository
 		$itemAttributes = $this->getTableBaseItemAttributes(array(
 		ItemAttribute::with_Name_Caption_DataType("Name", "Name", DataType::DT_STRING), //req
 		ItemAttribute::with_Name_Caption_DataType("DefaultValue", "Default value", DataType::DT_STRING)));		
-		parent::__construct($connectionData, "UserRoleSetting", $itemAttributes, $useItemCache, $cacheIdProperty);
+		parent::__construct($connectionData, "userrolesetting", $itemAttributes, $useItemCache, $cacheIdProperty);
 	}
 }
 

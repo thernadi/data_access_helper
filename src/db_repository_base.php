@@ -19,10 +19,6 @@ trait DbRepositoryBase
 	protected $cacheIdProperty = null;
 	protected  $itemCache = null;
 
-	public $depth = 1; //Override a larger value in derived DBRepository if structure contains more "DT_LIST" levels.
-	//For example #1: "Collection1.Collection2.Item1.Collection3.Item2" -> depth = 3  
-	//For example #2: "Collection1.Item1.Collection2.Item2" -> depth = 2  
-
 	public function __construct($connectionData, $tbl, $itemAttributes, $useItemCache = false, $cacheIdProperty = "Id")
 	{
 		parent::__construct($connectionData);
@@ -783,184 +779,209 @@ trait DbRepositoryBase
 		echo LINE_SEPARATOR;	
 	}
 
-	//$items : attributeItemArray array
-	//$filterParam : FilterParam
-	//firstMatch : when true then return the first match
-	public function find($items, $filterParam, $firstMatch = false)
+	public function find(array $items, FilterParam $filterParam, bool $firstMatch = false): array
 	{
-		$returnValue = array();
-		$matchByOneParameter = false;
-		if (count($filterParam->paramArray) === 1)
-		{
-			$matchByOneParameter = true;
-		}
+		$result = [];
 
-		if ($filterParam->logicalOperator === null && count($filterParam->paramArray) > 1)
-		{
-			$filterParam->logicalOperator = LogicalOperator::LO_AND;
-		}
-
-		$itemsForCheck = ItemAttribute::getSimpleCopiedItemAttributeArray($items);
-		for($i = 0; $i < count($itemsForCheck); $i++)
-		{
-			$this->setParent($itemsForCheck[$i]);
-		}
-
-		for($i = 0; $i < count($items); $i++)
-		{					
-			$match = 0;
-			foreach($filterParam->paramArray as $param)
-			{		
-				$itemAttributes = ItemAttribute::getItemAttribute($itemsForCheck[$i], $param->name);
-
-				if (!is_array($itemAttributes))
-				{
-					$itemAttributes = array($itemAttributes);
-				}
-
-				$submatch = 0;   
-				foreach($itemAttributes as $itemAttribute)
-				{	
-					if ($this->compareValues($itemAttribute->value, $param->value, $param->operator))										
-					{
-						$submatch++;		
-						$this->applyFiltersForListAttribute($itemAttribute, $itemAttribute, $itemAttribute->name, $param);		
-					}
-				}										
-				
-				if ($submatch > 0)
-				{
-					$match++;
-				}
-
-				if ($matchByOneParameter)
-				{
+		foreach ($items as $item) {
+			if ($this->matchItem($item, $filterParam)) {
+				$result[] = $item;
+				if ($firstMatch) {
 					break;
 				}
-				
 			}
+		}
 
-			
-			if (!$matchByOneParameter)
-			{
-				if (($filterParam->logicalOperator === LogicalOperator::LO_OR && $match > 0) 
-				|| ($filterParam->logicalOperator === LogicalOperator::LO_AND && $match === count($filterParam->paramArray)))
-				{
-					$returnValue[] = $items[$i];				
-					if ($firstMatch)
-					{
-						break;
-					}
-				}
-			}
-			else 
-			{
-				if ($match > 0)
-				{
-					$returnValue[] = $items[$i];		
-					if ($firstMatch)
-					{
-						break;
-					}	
-				}
-			}				
-		}	
-		return $returnValue;
+		return $result;
 	}
 
-	private function compareValues($value1, $value2, $operator)
-	{				
-		$pattern = str_replace('%', '.*', preg_quote($value2));
-		$returnValue = ($operator === Operator::OP_EQUAL && $value1 === $value2)
-			|| ($operator === Operator::OP_NOT_EQUAL && $value1 !== $value2)
-			|| ($operator === Operator::OP_LESS_THAN && $value1 !== null && $value1 < $value2)
-			|| ($operator === Operator::OP_LESS_THAN_OR_EQUAL && $value1 !== null && $value1  <= $value2)
-			|| ($operator === Operator::OP_GREATER_THAN && $value1 !== null && $value1 > $value2)
-			|| ($operator === Operator::OP_GREATER_THAN_OR_EQUAL && $value1 !== null && $value1 >= $value2)
-			|| ($operator === Operator::OP_LIKE && preg_match("/^$pattern$/", $value1))
-			|| ($operator === Operator::OP_NOT_LIKE && !preg_match("/^$pattern$/", $value1));
-	
-			return $returnValue;
-	}
+	/* ===================================================== */
 
-	private function setParent($item, $parent = null)
+	protected function matchItem($item, FilterParam $filterParam): bool
 	{
-		if (is_array($item) 
-		&& count($item) > 0)	
-		{
-			for ($i = 0; $i < count($item); $i++)
-			{
-				$item[array_keys($item)[$i]]->parent = $parent;
-
-				if ($item[array_keys($item)[$i]]->dataType === DataType::DT_LIST)
-				{
-					for($j = 0; $j < count($item[array_keys($item)[$i]]->value); $j++)
-					{
-						$this->setParent($item[array_keys($item)[$i]]->value[$j], $item[array_keys($item)[$i]]);				
-					}
-				}
-				else if ($item[array_keys($item)[$i]]->dataType === DataType::DT_ITEM)
-				{
-					$this->setParent($item[array_keys($item)[$i]]->value, $item[array_keys($item)[$i]]);
-				}
-			}
+		if (empty($filterParam->paramArray)) {
+			return true;
 		}
-	}
 
-	//We need the the most top DT_LIST attribute by the set depth.
-	private function applyFiltersForListAttribute($attribute, $childAttribute, $lastAttributeName, $param, &$depth = 0) 
-	{		
-		$returnValue = true; 
-		if ($attribute !== null && $attribute->dataType === DataType::DT_LIST)
-		{
-			for($i = count($attribute->value) - 1; $i >= 0; $i--)
-			{
-				if ($childAttribute->dataType === DataType::DT_ITEM)
-				{
-					if ($depth > 0)
-					{
-						if ($attribute->value[$i][$childAttribute->name]->value["Id"]->value !== $childAttribute->value["Id"]->value)
-						{
-							unset($attribute->value[$i]);
-						}
-					}
-					else
-					{
-						if (!$this->compareValues($attribute->value[$i][$childAttribute->name]->value[$lastAttributeName]->value, $param->value, $param->operator))
-						{
-							unset($attribute->value[$i]);
-						}
-					}
-				}
-				else //check values  
-				//TODO: DT_LIST has DT_LIST
-				{
-					if (!$this->compareValues($attribute->value[$i][$childAttribute->name]->value, $param->value, $param->operator))
-					{
-						unset($attribute->value[$i]);
-					}
+		// OR
+		if ($filterParam->logicalOperator === LogicalOperator::LO_OR) {
+			foreach ($filterParam->paramArray as $param) {
+				if ($this->matchSingleParam($item, $param)) {
+					return true;
 				}
 			}
-			
-			$reIndexedAttributeArray = array();
-			foreach($attribute->value as $value)
-			{
-				$reIndexedAttributeArray[] = $value; 
-			}
-			$attribute->value = $reIndexedAttributeArray;	
-			$depth++;
-		}
-		else if ($attribute === null) 
-		{
 			return false;
 		}
 
-		while($returnValue && $attribute !== null && $depth !== $this->depth)
-		{		
-			$returnValue = $this->applyFiltersForListAttribute($attribute->parent, $attribute, $lastAttributeName, $param, $depth);			
-		}
-		
+		// AND (DEFAULT)
+		return $this->matchGroupedParams($item, $filterParam->paramArray);
 	}
+
+	/* ===================================================== */
+	/**
+	 * AND logika: azonos collection-elemhez kell tartoznia
+	 */
+	protected function matchGroupedParams($item, array $params): bool
+	{
+		$groups = [];
+
+		foreach ($params as $param) {
+			$root = explode('.', $param->name)[0];
+			$groups[$root][] = $param;
+		}
+
+		foreach ($groups as $root => $groupParams) {
+
+			if (!isset($item[$root])) {
+				return false;
+			}
+
+			$attr = $item[$root];
+
+			// DT_LIST → egy elemnek BELÜL kell minden feltételnek teljesülnie
+			if ($attr->dataType === DataType::DT_LIST) {
+
+				$matched = false;
+
+				foreach ($attr->value as $listItem) {
+
+					$ok = true;
+					foreach ($groupParams as $param) {
+						$relativePath = substr($param->name, strlen($root) + 1);
+						if (!$this->matchPath($listItem, $relativePath, $param)) {
+							$ok = false;
+							break;
+						}
+					}
+
+					if ($ok) {
+						$matched = true;
+						break;
+					}
+				}
+
+				if (!$matched) {
+					return false;
+				}
+
+			} else {
+				foreach ($groupParams as $param) {
+					if (!$this->matchSingleParam($item, $param)) {
+						return false;
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	/* ===================================================== */
+	/**
+	 * Rekurzív DT_ITEM / DT_LIST feldolgozás
+	 */
+	protected function matchPath($item, string $path, Param $param): bool
+	{
+		if ($path === '') {
+			return false;
+		}
+
+		$parts = explode('.', $path);
+		$current = $item;
+
+		foreach ($parts as $index => $part) {
+
+			if (!isset($current[$part])) {
+				return false;
+			}
+
+			$attr = $current[$part];
+
+			if ($attr->dataType === DataType::DT_ITEM) {
+				$current = $attr->value;
+				continue;
+			}
+
+			if ($attr->dataType === DataType::DT_LIST) {
+				$remaining = implode('.', array_slice($parts, $index + 1));
+				foreach ($attr->value as $listItem) {
+					if ($this->matchPath($listItem, $remaining, $param)) {
+						return true;
+					}
+				}
+				return false;
+			}
+
+			// Egyszerű érték
+			return $this->compareValues($attr->value, $param->value, $param->operator);
+		}
+
+		return false;
+	}
+
+	/* ===================================================== */
+
+	protected function matchSingleParam($item, Param $param): bool
+	{
+		$values = ItemAttribute::getItemAttribute($item, $param->name);
+
+		if (!is_array($values)) {
+			$values = [$values];
+		}
+
+		foreach ($values as $val) {
+			$value = $val->value ?? null;
+			if ($this->compareValues($value, $param->value, $param->operator)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/* ===================================================== */
+
+	protected function compareValues($left, $right, int $operator): bool
+	{
+		switch ($operator) {
+
+			case Operator::OP_EQUAL:
+				return $right === null ? $left === null : $left == $right;
+
+			case Operator::OP_NOT_EQUAL:
+				return $right === null ? $left !== null : $left != $right;
+
+			case Operator::OP_IS_NULL:
+				return $left === null;
+
+			case Operator::OP_IS_NOT_NULL:
+				return $left !== null;
+
+			case Operator::OP_LIKE:
+				if ($left === null) return false;
+				return fnmatch(str_replace('%', '*', $right), $left);
+
+			case Operator::OP_NOT_LIKE:
+				if ($left === null) return true;
+				return !fnmatch(str_replace('%', '*', $right), $left);
+
+			case Operator::OP_LESS_THAN:
+				return $left !== null && $left < $right;
+
+			case Operator::OP_LESS_THAN_OR_EQUAL:
+				return $left !== null && $left <= $right;
+
+			case Operator::OP_GREATER_THAN:
+				return $left !== null && $left > $right;
+
+			case Operator::OP_GREATER_THAN_OR_EQUAL:
+				return $left !== null && $left >= $right;
+		}
+
+		return false;
+	}
+
+
 
 }
 

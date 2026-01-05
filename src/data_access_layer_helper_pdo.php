@@ -129,12 +129,13 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	* 
 	*
 	*/
-	public function transformQueryToDBSpecific($query)
+	public function transformQueryToDBSpecific(string $query)
 	{			
-		$returnValue = strtoupper($query);
+		$returnValue = $query;
 		$driverName = $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 		if ($driverName === "sqlsrv")//MSSQL SERVER
 		{			
+			$returnValue = strtoupper($returnValue);
 			$reserved = array("USER" => "[USER]");
 			foreach($reserved as $key => $val)
 			{

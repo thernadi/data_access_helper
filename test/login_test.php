@@ -1,6 +1,7 @@
 <?php
 namespace Rasher\Test;
 use Rasher\Data\PDO\DataManagement\{ConnectionData}; //PDO extension
+use Rasher\Data\PDO\DataManagement\{DataAccessLayerHelper};
 //use Rasher\Data\MySQLi\DataManagement\{ConnectionData}; //MySQLi extension
 use Rasher\Data\UserManagement\{DbUserRoleSettingRepository,DbUserRoleRepository,DbUserRepository};
 use Rasher\Data\Type\{LogicalOperator,Param,FilterParam,Operator,ItemAttribute};
@@ -71,6 +72,7 @@ class LoginTest
 			$filters = array();
 			$filters[] = new Param("IsDeleted", 0);
 			$filters[] = new Param("Name", "ACTIVE");
+			$item = null;
 			if (!$this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->checkItemInDB($filters, $item))
 			{
 				$item = $this->dbUserRepository->dbUserRoleRepository->dbUserRoleSettingRepository->getNewItemInstance();
@@ -371,8 +373,9 @@ try
 
 	//Fill connectionData out before using
 	//$connectionData = new ConnectionData("localhost", "userName", "password", "test"); // use it with MySQLi extension
-	//$connectionData = new ConnectionData("mysql:host=localhost;dbname=test", "userName", "password"); // use it with PDO extension (MySQL)
-	$connectionData = new ConnectionData("sqlsrv:server=(local);Database=test","",""); //PDO MSSQL
+	$connectionData = new ConnectionData("mysql:host=localhost;dbname=test", "userName", "password"); // use it with PDO extension (MySQL)
+	//$connectionData = new ConnectionData("sqlsrv:server=(local);Database=test","",""); //PDO MSSQL
+	
 
 	//DbUserRoleSettingRepository single instance
 	$dbUserRoleSettingRepository = new DbUserRoleSettingRepository($connectionData, true, "Name"); //Caching by Name
@@ -402,8 +405,8 @@ try
 
 	$loginTest->createUserRelatedBaseData(); //UserRole + UserRoleSetting creating
 
-	//TEST DATA generation: creating 500 users
-	$loginTest->generateUsers(500, 3);
+	//TEST DATA generation: creating 100 users
+	$loginTest->generateUsers(100, 3);
 
 
 	//Caching will be slow when you have much more data!!!
@@ -494,7 +497,7 @@ try
 	echo "Finding item test #3";
 	echo LINE_SEPARATOR;
 	$param = array();
-	$param[] = new Param("LastLoginDateTime", date('Y-m-d H:i:s', strtotime("2024-08-08")), Operator::OP_LESS_THAN);
+	$param[] = new Param("LastLoginDateTime", date('Y-m-d H:i:s', strtotime("2027-08-08")), Operator::OP_LESS_THAN);
 	$filterParam = new FilterParam($param);
 	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(true), $filterParam, false); 
 	echo "count: ".count($foundItems);
@@ -507,7 +510,7 @@ try
 	echo LINE_SEPARATOR;
 	$param = array();
 	$param[] = new Param("LastLoginDateTime", date('Y-m-d H:i:s', strtotime("2023-08-08")), Operator::OP_GREATER_THAN_OR_EQUAL);
-	$param[] = new Param("LastLoginDateTime", null, Operator::OP_EQUAL);	
+	$param[] = new Param("LastLoginDateTime", null, Operator::OP_IS_NULL);	
 	$filterParam = new FilterParam($param, LogicalOperator::LO_OR);
 	$foundItems = $dbUserRepository->find($dbUserRepository->getAllItemsFromCache(true), $filterParam, false); 
 	echo "count: ".count($foundItems);
@@ -531,7 +534,6 @@ try
 	echo LINE_SEPARATOR;
 
 	//Find test #6: any user who has "BASE_USER" UserRole and has "LOGLEVEL" = 10 setting
-	//DbUserRepository.depth = 2, if you set it to 0 you cannot get the correct result
 	echo "Finding item test #6";
 	echo LINE_SEPARATOR;
 	$param = array();
