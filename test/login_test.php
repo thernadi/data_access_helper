@@ -7,6 +7,7 @@ use Rasher\Data\UserManagement\{DbUserRoleSettingRepository,DbUserRoleRepository
 use Rasher\Data\Type\{LogicalOperator,Param,FilterParam,Operator,ItemAttribute};
 use Rasher\Common\{Common};
 
+require_once __DIR__."/../bootstrap.php"; //php compatibility
 include_once __DIR__."/user_data_repository.php";
 
 class LoginTest
@@ -375,7 +376,7 @@ try
 	//$connectionData = new ConnectionData("localhost", "userName", "password", "test"); // use it with MySQLi extension
 	$connectionData = new ConnectionData("mysql:host=localhost;dbname=test", "userName", "password"); // use it with PDO extension (MySQL)
 	//$connectionData = new ConnectionData("sqlsrv:server=(local);Database=test","",""); //PDO MSSQL
-	
+
 
 	//DbUserRoleSettingRepository single instance
 	$dbUserRoleSettingRepository = new DbUserRoleSettingRepository($connectionData, true, "Name"); //Caching by Name
