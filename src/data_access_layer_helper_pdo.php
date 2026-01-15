@@ -15,17 +15,17 @@ include_once __DIR__."/common_static_helper.php";
 
 class ConnectionData
 {	
-	public $dsn = null;
-	public $user = null;
-	public $psw = null;
-	public $options = null;
+	public string $dsn = "";
+	public ?string $user = null;
+	public ?string $psw = null;
+	public ?array $options = null;
 
 	/**
 	* ConnectionData constructor
 	* 
 	*
 	*/
-	public function __construct($dsn, $user = null, $psw = null, $options = null)
+	public function __construct(string $dsn, ?string $user = null, ?string $psw = nul, ?array $options = null)
 	{
 		$this->dsn = $dsn;
 		$this->user = $user;
@@ -36,16 +36,16 @@ class ConnectionData
 
 class DataAccessLayerHelper extends DataAccessLayerHelperBase
 {
-	private $pdo = null;	
-	protected $connectionData = null;
-	protected $isInTransaction = false;
+	private ?PDO $pdo = null;	
+	protected ConnectionData $connectionData;
+	protected bool $isInTransaction = false;
 
 	/**
 	* DataAccessHelper constructor
 	* @param ConnectionData $connectionData The PDO connection data
 	*
 	*/
-	public function __construct($connectionData)
+	public function __construct(ConnectionData $connectionData)
 	{
 		$this->connectionData = $connectionData;
 	}
@@ -96,7 +96,7 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	*
 	* @return array @returnValue Return the result data set
 	*/
-	public function query($query)
+	public function query(string $query):array
 	{
 		$returnValue = array();
 		try
@@ -155,11 +155,17 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	*
 	* @return array @returnValue Return the result data set
 	*/
-	public function execute($query, $params, &$item = null)
+	public function execute(string $query, ?array $params = null, ?array &$item = null):array
 	{
 		$returnValue = array();
 		try
 		{
+
+			if ($params === null)
+			{
+				$params = array();
+			}
+
 			$this->open();
 			$stmt = $this->pdo->prepare($this->transformQueryToDBSpecific($query));
 			for($i = 1; $i <= count($params); $i++)
@@ -203,11 +209,16 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	*
 	* @return mixed @returnValue Return the scalar result 
 	*/
-	public function executeScalar($query, $params)
+	public function executeScalar(string $query, ?array $params = null)
 	{
 		$returnValue = null;
 		try
 		{
+			if ($params === null)
+			{
+				$params = array();
+			}
+
 			$this->open();
 			$stmt = $this->pdo->prepare($this->transformQueryToDBSpecific($query));
 			for($i = 1; $i <= count($params); $i++)

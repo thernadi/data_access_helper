@@ -34,7 +34,7 @@ abstract class Operator
 	const OP_IS_NULL = 9; //DB specific only
 	const OP_IS_NOT_NULL = 10; //DB specific only
 
-	public static function getOperatorForDB($operator)
+	public static function getOperatorForDB(int $operator):string
 	{
 		$returnValue = null;
 		switch ($operator) 
@@ -86,18 +86,18 @@ abstract class LogicalOperator
 //Key-Value parameter class
 class Param
 {
-	public $name = null;
+	public string $name;
+	public int $operator; //Operator
 	public $value = null;
-	public $operator = null;
-	
-	public function __construct($name, $value, $operator = Operator::OP_EQUAL)
+
+	public function __construct(string $name, $value, int $operator = Operator::OP_EQUAL)
 	{
 		$this->name = $name;
 		$this->value = $value;
 		$this->operator = $operator;
 	}
 	
-	public static function getParam($name, $paramArray)
+	public static function getParam(string $name, array $paramArray)
 	{
 		$returnValue = null;
 		foreach($paramArray as $param)
@@ -116,10 +116,10 @@ class Param
 //$params: Param array
 class FilterParam
 {
-    public $paramArray;
-    public $logicalOperator;
+    public array $paramArray;
+    public ?int $logicalOperator;
 
-    public function __construct(array $params, $logicalOperator = null)
+    public function __construct(array $params, ?int $logicalOperator = null)
     {
         $this->paramArray = $params;
         $this->logicalOperator = $logicalOperator;
@@ -129,14 +129,14 @@ class FilterParam
 
 class ReferenceDescriptor
 {
-	public $sourceTableName = null;
-	public $targetTableName = null;	
-	public $sourceItemAttributes = null;
-	public $targetItemAttributes = null;	
-	public $sourceMappingAttributeName = null;
-	public $targetMappingAttributeName = null;
+	public string $sourceTableName = "";
+	public string $targetTableName = "";	
+	public array $sourceItemAttributes = array();
+	public array $targetItemAttributes = array();	
+	public string $sourceMappingAttributeName = "";
+	public string $targetMappingAttributeName = "";
 
-	public function __construct($sourceTableName, $targetTableName, $sourceItemAttributes, $targetItemAttributes, $sourceMappingAttributeName, $targetMappingAttributeName) 
+	public function __construct(string $sourceTableName, string $targetTableName, array $sourceItemAttributes, array $targetItemAttributes, string $sourceMappingAttributeName, string $targetMappingAttributeName) 
 	{	
 		$this->sourceTableName = $sourceTableName;
 		$this->targetTableName = $targetTableName;						
@@ -149,30 +149,31 @@ class ReferenceDescriptor
 
 class CachedItem
 {
-	public $item = null;
-	public $isFullyLoaded = false;
-	public function __construct($item)
+	public array $item;
+	public bool $isFullyLoaded = false;
+	public function __construct(array $item)
 	{
 		$this->item = $item;
 	}
 }
 
 class ItemAttribute
-{   
-	public $parent = null;
-	public $originalValue = null;
-	public $name = null;
-	public $caption = null;
-	public $dataType = null;
-	public $dataFormat = null;
-	public $required = null;
-	public $readonly = null;
-	public $referenceDescriptor = null;
+{ 
+	public string $name;
+	public string $caption;
+	public int $dataType; //DataType
+	public ?string $dataFormat = null;
+	public bool $required = false;
+	public bool $readonly = false;
+	public bool $isVisible = true;	
+	public ?int $orderByIndex = null;
+	public ?ReferenceDescriptor $referenceDescriptor = null;
+	public ?string $defaultCaption = null;
+
 	public $value = null;
-	public $orderByIndex = null;
-	public $isVisible = null;
+	public $originalValue = null;
 	public $defaultValue = null;
-	public $defaultCaption = null;
+
 	
 	public function __construct($name, 
 	$caption, 
@@ -196,14 +197,14 @@ class ItemAttribute
 	}
 
 	//constructor
-	public static function with_Name_DataType($name, $dataType)
+	public static function with_Name_DataType(string $name, int $dataType):ItemAttribute
 	{
 		$returnValue = new self($name, $name, $dataType);
 		return $returnValue;
 	}
 
 	//constructor
-	public static function with_Name_DataType_DataFormat($name, $dataType, $dataFormat)
+	public static function with_Name_DataType_DataFormat(string $name, int $dataType, string $dataFormat):ItemAttribute
 	{
 		$returnValue = new self($name, $name, $dataType);
 		$returnValue->dataFormat = $dataFormat;
@@ -211,14 +212,14 @@ class ItemAttribute
 	}
 	
 	//constructor
-	public static function with_Name_Caption_DataType($name, $caption, $dataType)
+	public static function with_Name_Caption_DataType(string $name, string $caption, int $dataType):ItemAttribute
 	{
 		$returnValue = new self($name, $caption, $dataType);
 		return $returnValue;
 	}
 	
 	//constructor
-	public static function with_Name_Caption_DataType_DefaultValue($name, $caption, $dataType, $defaultValue)
+	public static function with_Name_Caption_DataType_DefaultValue(string $name, string $caption, int $dataType, $defaultValue):ItemAttribute
 	{
 		$returnValue = new self($name, $caption, $dataType);
 		$returnValue->defaultValue = $defaultValue;	
@@ -227,14 +228,14 @@ class ItemAttribute
 		
 
 	//constructor
-	public static function with_Name_Caption_DataType_DataFormat($name, $caption, $dataType, $dataFormat)
+	public static function with_Name_Caption_DataType_DataFormat(string $name, string $caption, int $dataType, string $dataFormat):ItemAttribute
 	{
 		$returnValue = new self($name, $caption, $dataType);
 		$returnValue->dataFormat = $dataFormat;	
 		return $returnValue;
 	}
 
-	public function setReferenceDescriptor($referenceDescriptor)
+	public function setReferenceDescriptor(?ReferenceDescriptor $referenceDescriptor)
 	{	
 		$this->referenceDescriptor = $referenceDescriptor;	
 		if ($referenceDescriptor !== null && $this->dataType === DataType::DT_LIST) 
@@ -245,7 +246,7 @@ class ItemAttribute
 
 
 	//$array: ItemAttribute array
-	public static function getSimpleCopiedItemAttributeArray($array)
+	public static function getSimpleCopiedItemAttributeArray(?array $array):array
 	{
 		if ($array === null)
 		{
@@ -286,7 +287,7 @@ class ItemAttribute
 	}
 		
 	//$itemAttributes: ItemAttribute array
-	public static function getItemAttribute($itemAttributes, $attributeName) 
+	public static function getItemAttribute(array $itemAttributes, string $attributeName) 
 	{	
 		$returnValue = null;			
 		if(str_contains($attributeName, "."))
@@ -362,6 +363,7 @@ class ItemAttribute
 		return $returnValue;		
 	}
 
+	//@param is mixed
 	private static function eliminateOutterArray($param)
 	{
 		$returnValue = $param;

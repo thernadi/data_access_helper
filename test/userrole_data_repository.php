@@ -1,8 +1,8 @@
 <?php
 namespace Rasher\Data\UserManagement;
 use Rasher\Data\DataManagement\{SimpleTable,HistoricalTable};
-use Rasher\Data\PDO\DataManagement\{DbRepository,DbUserRoleSettingRepository}; //PDO extension
-//use Rasher\Data\MySQLi\DataManagement\{DbRepository}; //MySQLi extension
+use Rasher\Data\PDO\DataManagement\{ConnectionData,DbRepository}; //PDO extension
+//use Rasher\Data\MySQLi\DataManagement\{ConnectionData,DbRepository}; //MySQLi extension
 use Rasher\Data\Type\{DataType,ReferenceDescriptor,ItemAttribute};
 
 include_once __DIR__."/../src/db_repository_base_pdo.php"; //PDO extension
@@ -16,9 +16,9 @@ class DbUserRoleRepository extends DbRepository
 {	
 	use SimpleTable;
 
-	public $dbUserRoleSettingRepository = null;
+	public DbUserRoleSettingRepository $dbUserRoleSettingRepository;
 
-	public function __construct($connectionData, $dbUserRoleSettingRepository, $useItemCache = false, $cacheIdProperty = "Id")
+	public function __construct(ConnectionData $connectionData, DbUserRoleSettingRepository $dbUserRoleSettingRepository, bool $useItemCache = false, string $cacheIdProperty = "Id")
 	{
 		$this->dbUserRoleSettingRepository = $dbUserRoleSettingRepository;
 
@@ -33,7 +33,7 @@ class DbUserRoleRepository extends DbRepository
 
 	}
 
-	public function getUserRoleUserRoleSettingsCollectionItemAttributes()
+	public function getUserRoleUserRoleSettingsCollectionItemAttributes():array
 	{
 		$returnValue = $this->getTableBaseItemAttributes(array(
 		ItemAttribute::with_Name_Caption_DataType("UserRole", "UserRole", DataType::DT_INT), //req (this attribute's type cannot be DataType::DT_ITEM !)

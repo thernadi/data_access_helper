@@ -1,8 +1,8 @@
 <?php
 namespace Rasher\Data\UserManagement;
 use Rasher\Data\DataManagement\{SimpleTable,HistoricalTable};
-use Rasher\Data\PDO\DataManagement\{DbRepository}; //PDO extension
-//use Rasher\Data\MySQLi\DataManagement\{DbRepository}; //MySQLi extension
+use Rasher\Data\PDO\DataManagement\{ConnectionData,DbRepository}; //PDO extension
+//use Rasher\Data\MySQLi\DataManagement\{ConnectionData,DbRepository}; //MySQLi extension
 use Rasher\Data\Type\{DataType,ReferenceDescriptor,ItemAttribute};
 
 include_once __DIR__."/../src/db_repository_base_pdo.php"; //PDO extension
@@ -16,9 +16,9 @@ class DbUserRepository extends DbRepository
 {
 	use SimpleTable;
 	
-	public $dbUserRoleRepository = null;
+	public DbUserRoleRepository $dbUserRoleRepository;
 
-	public function __construct($connectionData, $dbUserRoleRepository, $useItemCache = false, $cacheIdProperty = "Id")
+	public function __construct(ConnectionData $connectionData, DbUserRoleRepository $dbUserRoleRepository, bool $useItemCache = false, string $cacheIdProperty = "Id")
 	{
 		$this->dbUserRoleRepository = $dbUserRoleRepository;
 
@@ -34,7 +34,7 @@ class DbUserRepository extends DbRepository
 		$ItemAttribute->setReferenceDescriptor(new ReferenceDescriptor("user", "user_userrolescollection", $this->itemAttributes, $this->getUserUserRolesCollectionItemAttributes(), "Id", "User"));
 	}
 
-	public function getUserUserRolesCollectionItemAttributes()
+	public function getUserUserRolesCollectionItemAttributes():array
 	{
 		$returnValue = $this->getTableBaseItemAttributes(array(
 			ItemAttribute::with_Name_Caption_DataType("User", "User", DataType::DT_INT), //req (this attribute's type cannot be DataType::DT_ITEM !)

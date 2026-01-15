@@ -24,9 +24,4 @@ where the language was more permissive in certain areas.
 
 Starting with PHP 8.2, **dynamic properties are deprecated**.
 
-### Problem
-Properties are accessed that are not declared in the class:
-```php
-$attr->value;
-$attr->originalValue;
-$attr->orderByIndex;
+

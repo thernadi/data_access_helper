@@ -4,6 +4,7 @@
 //Current version: 2.40
 
 namespace Rasher\Data\DataManagement;
+
 use Rasher\Data\Type\{DataType,LogicalOperator,Operator,Param,FilterParam,ReferenceDescriptor,ItemAttribute,CachedItem};
 use Rasher\Common\{Common};
 
@@ -13,13 +14,13 @@ include_once __DIR__."/common_static_helper.php";
 //ABSTRACT
 trait DbRepositoryBase
 {
-	public $itemAttributes = null; //ItemAttribute object array without values, it is only the data structure
-	protected $tbl = null;
-	protected $useItemCache = null;
-	protected $cacheIdProperty = null;
-	protected  $itemCache = null;
+	public array $itemAttributes; //ItemAttribute object array without values, it is only the data structure
+	protected string $tbl;
+	protected bool $useItemCache;
+	protected string $cacheIdProperty;
+	protected array $itemCache;
 
-	public function __construct($connectionData, $tbl, $itemAttributes, $useItemCache = false, $cacheIdProperty = "Id")
+	public function __construct($connectionData, string $tbl, array $itemAttributes, bool $useItemCache = false, string $cacheIdProperty = "Id")
 	{
 		parent::__construct($connectionData);
 		$this->tbl = $tbl;
@@ -38,7 +39,7 @@ trait DbRepositoryBase
 	}
 
 	//Load from DB or session if exists and needed
-	public function buildCache($reloadFromDB = false)
+	public function buildCache(bool $reloadFromDB = false)
 	{
 		if ($this->useItemCache)
 		{
@@ -92,7 +93,7 @@ trait DbRepositoryBase
 		}
 	}
 
-	public function addItemToCache($item)
+	public function addItemToCache(array $item)
 	{
 		if(isset($this->itemCache))
 		{
@@ -139,7 +140,7 @@ trait DbRepositoryBase
 		}
 	}
 
-	public function getAllItemsFromCache($withFullyLoad = false)
+	public function getAllItemsFromCache(bool $withFullyLoad = false):array
 	{
 		$returnValue = array();
 		foreach($this->itemCache as $cachedItem)
@@ -156,7 +157,7 @@ trait DbRepositoryBase
 		return $returnValue;
 	}
 
-	public function getItemFromCache($id)
+	public function getItemFromCache(string $id):array
 	{
 		$returnValue = null;
 		if(isset($this->itemCache) && count($this->itemCache) > 0)
@@ -229,7 +230,7 @@ trait DbRepositoryBase
 		return $returnValue;
 	}
 
-	public function hasChanges($item)
+	public function hasChanges(array $item):bool
 	{
 		$returnValue = false;
 
@@ -266,21 +267,21 @@ trait DbRepositoryBase
 	}
 
 
-	public function getMinField($fieldName)
+	public function getMinField(string $fieldName)
 	{
 		$query = "SELECT DISTINCT MIN(".$fieldName.") FROM ". $this->tbl . " WHERE IsDeleted = ?";
 		$params[] = new Param("IsDeleted", 0);		
 		return $this->executeScalar($query, $this->convertParamArrayToDBSpecificParamArray($params));
 	}
 
-	public function getMaxField($fieldName)
+	public function getMaxField(string $fieldName)
 	{
 		$query = "SELECT DISTINCT MAX(".$fieldName.") FROM ". $this->tbl . " WHERE IsDeleted = ?";
 		$params[] = new Param("IsDeleted", 0);
 		return $this->executeScalar($query, $this->convertParamArrayToDBSpecificParamArray($params));
 	}
 
-	public function getCountField($fieldName)
+	public function getCountField(string $fieldName)
 	{
 		$query = "SELECT COUNT(".$fieldName.") FROM ". $this->tbl . " WHERE IsDeleted = ?";
 		$params[] = new Param("IsDeleted", 0);		
@@ -288,7 +289,7 @@ trait DbRepositoryBase
 	}
 	
 
-	public function getNewItemInstance($itemAttributes = null)
+	public function getNewItemInstance(?array $itemAttributes = null):array
 	{
 		$returnValue = null;
 		if ($itemAttributes === null) 
@@ -309,7 +310,7 @@ trait DbRepositoryBase
 	}
 
 	//$rowArray: array from a query's return output
-	public function convertToItemAttributeArrayArray($rowArray, $itemAttributes = null)
+	public function convertToItemAttributeArrayArray(array $rowArray, ?array $itemAttributes = null):array
 	{
 		$returnValue = array(); 
 		if ($itemAttributes === null) 
@@ -365,7 +366,7 @@ trait DbRepositoryBase
 	}
 	
 	//$itemAttributeArrayArray: (ItemAttribute array) array
-	public function convertToRowArray($itemAttributeArrayArray)
+	public function convertToRowArray(?array $itemAttributeArrayArray):array
 	{
 		$returnValue = array(); 
 		foreach ($itemAttributeArrayArray as $itemAttributeArray)
@@ -396,11 +397,11 @@ trait DbRepositoryBase
 	}
 
 	//override it in derived class
-	protected function convertParamArrayToDBSpecificParamArray($paramArray, $itemAttributes = null){}
+	protected function convertParamArrayToDBSpecificParamArray(array $paramArray, ?array $itemAttributes = null){}
 
 	//$item: ItemAttribute array  
 	//for setting saving parameters
-	protected function getParamsByItem($item)
+	protected function getParamsByItem(array $item):array
 	{
 		$returnValue = array();
 		foreach ($item as $key => $value)
@@ -425,7 +426,7 @@ trait DbRepositoryBase
 	}
 
 	//This function can load all items with the type of "DT_ITEM" item together (there it is filled out its "Id" only) but the "DT_LIST" are not loaded. 
-	public function loadAll()
+	public function loadAll():array
 	{
 		$query = "SELECT * FROM " . $this->tbl . " WHERE IsDeleted = ? ORDER BY Id asc";
 		$params = array();
@@ -435,7 +436,7 @@ trait DbRepositoryBase
 	}
 
 	//This function can load all items with the type of "DT_ITEM" item together (there it is filled out its "Id" only) but the "DT_LIST" are not loaded. 
-	public function loadByFilter($filters, $fields, $orderFields, $orderDirection = null) 
+	public function loadByFilter(array $filters, array $fields, array $orderFields, ?string $orderDirection = null):array
 	//$filters: Param object array 
 	//$fields = needed fields array  
 	//$orderFields: array
@@ -516,13 +517,13 @@ trait DbRepositoryBase
 
 	//This function can load filtered items with the type of "DT_ITEM" item together (there it is filled out its "Id" only) but the "DT_LIST" are not loaded. 
 	//$filters: Param object array
-	public function loadByFilter2($filters)
+	public function loadByFilter2(array $filters):array
 	{	
 		return $this->loadByFilter($filters, array(), array("Id"), "ASC");
 	}
 
 	//This function can load one item by "Id" with the type of "DT_ITEM" item together and the "DT_LIST" are loaded. 
-	public function loadById($id, $tbl = null, $idAttributeName = null,  $itemAttributes = null)
+	public function loadById(int $id, ?string $tbl = null, ?string $idAttributeName = null, ?array  $itemAttributes = null):array
 	{
 		$returnValue = null;
 		if ($tbl === null)
@@ -562,7 +563,7 @@ trait DbRepositoryBase
 	}
 
 	//$item: ItemAttribute array	
-	public function save($item, $tbl = null) 
+	public function save(array $item, ?string $tbl = null) 
 	{
 		if ($this->hasChanges($item))
 		{
@@ -623,7 +624,7 @@ trait DbRepositoryBase
 		$this->execute($query, $this->convertParamArrayToDBSpecificParamArray($params));
 	}
 	
-	public function delete($item, $tbl = null, &$queryBuffer = null)
+	public function delete(array $item, ?string $tbl = null, ?array  &$queryBuffer = null)
 	{
 		$first = false;
 		if ($tbl === null)
@@ -664,7 +665,7 @@ trait DbRepositoryBase
 		}
 	}
 
-	public function saveWithTransaction($item) 
+	public function saveWithTransaction(array $item) 
 	{
 		try
 		{
@@ -679,7 +680,7 @@ trait DbRepositoryBase
 		}
 	}
 
-	public function loadByIdWithTransaction($id)
+	public function loadByIdWithTransaction(int $id)
 	{
 		$returnValue = null;
 		try
@@ -696,7 +697,7 @@ trait DbRepositoryBase
 		return $returnValue;
 	}
 
-	public function deleteWithTransaction($item)
+	public function deleteWithTransaction(array $item)
 	{
 		try
 		{
@@ -714,7 +715,7 @@ trait DbRepositoryBase
 	//$name: attribute name
 	//$value: search value	
 	//$items: ItemAttribute array
-	public function isValueInItems($name, $value, $items, &$outputItem) 
+	public function isValueInItems(string $name, string $value, array $items, ?array &$outputItem):bool 
 	{
 		$outputItem = null;
 		$returnValue = false;
@@ -735,7 +736,7 @@ trait DbRepositoryBase
 		return $returnValue;
 	}
 
-	public function checkItemInDB($filters, &$item)
+	public function checkItemInDB(array $filters, ?array &$item):bool
 	{
 		$returnValue = false;
 		$item = $this->loadByFilter2($filters);
@@ -750,7 +751,7 @@ trait DbRepositoryBase
 		return $returnValue;	
 	}
 
-	public function writeOutSimpleData($items) 
+	public function writeOutSimpleData(array $items) 
 	{				
 		echo LINE_SEPARATOR.LINE_SEPARATOR;
 		if (isset($items) && count($items) > 0)
@@ -797,7 +798,7 @@ trait DbRepositoryBase
 
 	/* ===================================================== */
 
-	protected function matchItem($item, FilterParam $filterParam): bool
+	protected function matchItem(array $item, FilterParam $filterParam): bool
 	{
 		if (empty($filterParam->paramArray)) {
 			return true;
@@ -821,7 +822,7 @@ trait DbRepositoryBase
 	/**
 	 * AND logika: azonos collection-elemhez kell tartoznia
 	 */
-	protected function matchGroupedParams($item, array $params): bool
+	protected function matchGroupedParams(array $item, array $params): bool
 	{
 		$groups = [];
 
@@ -880,7 +881,7 @@ trait DbRepositoryBase
 	/**
 	 * Rekurzív DT_ITEM / DT_LIST feldolgozás
 	 */
-	protected function matchPath($item, string $path, Param $param): bool
+	protected function matchPath(array $item, string $path, Param $param): bool
 	{
 		if ($path === '') {
 			return false;
@@ -921,7 +922,7 @@ trait DbRepositoryBase
 
 	/* ===================================================== */
 
-	protected function matchSingleParam($item, Param $param): bool
+	protected function matchSingleParam(array $item, Param $param): bool
 	{
 		$values = ItemAttribute::getItemAttribute($item, $param->name);
 
@@ -993,12 +994,12 @@ abstract class TableType
 
 trait SimpleTable
 {
-	protected function getTableType()
+	protected function getTableType():int
 	{
 		return TableType::TT_SIMPLE;
 	}
 
-	protected function getTableBaseItemAttributes($itemAttributes)
+	protected function getTableBaseItemAttributes(array $itemAttributes):array
 	{
 		$simpleTableItemAttributesBase = array_merge(array(
 			ItemAttribute::with_Name_Caption_DataType("Id", "Id", DataType::DT_INT), //req, pk, autoinc
@@ -1010,12 +1011,12 @@ trait SimpleTable
 //TODO LATER:
 trait HistoricalTable
 {
-	protected function getTableType()
+	protected function getTableType():int
 	{
 		return TableType::TT_HISTORICAL;
 	}
 
-	protected function getTableBaseItemAttributes($itemAttributes)
+	protected function getTableBaseItemAttributes(array $itemAttributes):array
 	{
 		$historicalTableItemAttributesBase = array_merge(array(
 			ItemAttribute::with_Name_Caption_DataType("TechnicalId", "Technical Id", DataType::DT_INT), //req, pk, autoinc

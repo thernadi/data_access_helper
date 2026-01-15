@@ -1,8 +1,8 @@
 <?php
 namespace Rasher\Test;
 use Rasher\Data\PDO\DataManagement\{ConnectionData}; //PDO extension
-use Rasher\Data\PDO\DataManagement\{DataAccessLayerHelper};
 //use Rasher\Data\MySQLi\DataManagement\{ConnectionData}; //MySQLi extension
+
 use Rasher\Data\UserManagement\{DbUserRoleSettingRepository,DbUserRoleRepository,DbUserRepository};
 use Rasher\Data\Type\{LogicalOperator,Param,FilterParam,Operator,ItemAttribute};
 use Rasher\Common\{Common};
@@ -12,10 +12,10 @@ include_once __DIR__."/user_data_repository.php";
 
 class LoginTest
 {
-	public $dbUserRepository = null;
-	public $userLogin = null;
+	public ?DbUserRepository $dbUserRepository = null;
+	public ?array $userLogin = null;
 
-    public function __construct($dbUserRepository)
+    public function __construct(DbUserRepository $dbUserRepository)
 	{
 		$this->dbUserRepository = $dbUserRepository;
 	}
@@ -196,7 +196,7 @@ class LoginTest
 		}
 	}
 
-	private function getNewUserRoleSettingCollectionItem($userRoleSettingName, $value)
+	private function getNewUserRoleSettingCollectionItem(string $userRoleSettingName, string $value): array
 	{
 		$userRoleSettingCollectionItem = $this->dbUserRepository->dbUserRoleRepository->getNewItemInstance($this->dbUserRepository->dbUserRoleRepository->getUserRoleUserRoleSettingsCollectionItemAttributes());
 		$filters = array();
@@ -209,7 +209,7 @@ class LoginTest
 	}
 
 
-    public function login($loginName, $password)
+    public function login(string $loginName, string $password):bool
     {
 		$returnValue = false;
 		$currentDate = date('Y-m-d H:i:s');	
@@ -297,7 +297,7 @@ class LoginTest
 		}
 	}
 
-	public function getNewUserRoleCollectionItem($userRoleCode)
+	public function getNewUserRoleCollectionItem(string $userRoleCode):array
 	{
 		$userRoleCollectionItem = $this->dbUserRepository->getNewItemInstance($this->dbUserRepository->getUserUserRolesCollectionItemAttributes());
 		$filters = array();
@@ -308,7 +308,7 @@ class LoginTest
 		return $userRoleCollectionItem;
 	}
 
-	public function registerNewUser($loginName, $password, $userRoleCollectionItemArray)
+	public function registerNewUser(string $loginName, string $password, array $userRoleCollectionItemArray)
 	{	
 		$newUser = null;
 		$filters = array();
@@ -334,7 +334,7 @@ class LoginTest
 		}
 	}
 
-	public function deleteUser($loginName)
+	public function deleteUser(string $loginName)
 	{	
 		$currentUser = null;
 		$filters = array();
@@ -352,7 +352,7 @@ class LoginTest
 		}
 	}
 
-	public function generateUsers($count, $startIndex = 1)
+	public function generateUsers(int $count, int $startIndex = 1)
 	{
 		for($i = $startIndex; $i < ($startIndex + $count); $i++)
 		{
@@ -376,7 +376,6 @@ try
 	//$connectionData = new ConnectionData("localhost", "userName", "password", "test"); // use it with MySQLi extension
 	$connectionData = new ConnectionData("mysql:host=localhost;dbname=test", "userName", "password"); // use it with PDO extension (MySQL)
 	//$connectionData = new ConnectionData("sqlsrv:server=(local);Database=test","",""); //PDO MSSQL
-	
 
 	//DbUserRoleSettingRepository single instance
 	$dbUserRoleSettingRepository = new DbUserRoleSettingRepository($connectionData, true, "Name"); //Caching by Name
@@ -397,7 +396,7 @@ try
 	}
 	else
 	{
-		$loginTest = json_decode($loginTest); 
+		$loginTest = json_decode($_SESSION["LoginTest"]); 
 	}
 
 

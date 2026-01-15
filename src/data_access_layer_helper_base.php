@@ -10,14 +10,14 @@ use Rasher\Data\Type\{Param};
 
 class BindingParam extends Param
 {
-	public $type = null;
+	public string $type;
 	
 	/**
 	* BindingParam constructor
 	* 
 	*
 	*/
-	public function __construct($name, $type, $value)
+	public function __construct(string $name, string $type, $value)
 	{
 		parent::__construct($name, $value);
 		$this->type = $type;
@@ -38,7 +38,7 @@ abstract class DataAccessLayerHelperBase
 	*
 	* @return boolean @returnValue Return true if found the row data and false if not
 	*/
-	public function isValueInRows($name, $value, $rows, &$outputRow) 
+	public function isValueInRows(string $name, $value, array $rows, array &$outputRow) 
 	{
 		$outputRow = null;
 		$returnValue = false;

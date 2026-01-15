@@ -22,7 +22,7 @@ abstract class DbRepository extends DataAccessLayerHelper
 {
 	use DbRepositoryBase;
 
-	protected function convertParamArrayToDBSpecificParamArray($paramArray, $itemAttributes = null)
+	protected function convertParamArrayToDBSpecificParamArray(array $paramArray, ?array $itemAttributes = null):array
 	{
 		if ($itemAttributes === null)
 		{

@@ -14,17 +14,17 @@ include_once __DIR__."/common_static_helper.php";
 
 class ConnectionData
 {	
-	public $server = null;
-	public $user = null;
-	public $psw = null;
-	public $db = null;
+	public string $server;
+	public string $user;
+	public string $psw;
+	public string $db;
 
 	/**
 	* ConnectionData constructor
 	* 
 	*
 	*/
-	public function __construct($server, $user, $psw, $db)
+	public function __construct(string $server, string $user, string $psw, string $db)
 	{
 		$this->server = $server;
 		$this->user = $user;
@@ -35,8 +35,8 @@ class ConnectionData
 
 class StatementResult
 {
-	private $bindVarsArray = array();
-	private $results = array();
+	private array $bindVarsArray = array();
+	private array $results = array();
 
 	/**
 	* StatementResult constructor
@@ -54,12 +54,12 @@ class StatementResult
 		$meta->close();
 	}
 
-	public function getArray()
+	public function getArray():array
 	{
 		return $this->results;
 	}
 
-	public function get($columnName)
+	public function get(string $columnName)
 	{
 		return $this->results[$columnName];
 	}
@@ -67,16 +67,16 @@ class StatementResult
 
 class DataAccessLayerHelper extends DataAccessLayerHelperBase
 {
-	private $mysqli = null;	
-	protected $connectionData = null;	
-	protected $isInTransaction = false;
+	private ?mysqli $mysqli = null;	
+	protected ?ConnectionData $connectionData = null;	
+	protected bool $isInTransaction = false;
 
 	/**
 	* DataAccessHelper constructor
 	* @param ConnectionData $connectionData The MySQLi connection data
 	*
 	*/
-	public function __construct($connectionData)
+	public function __construct(ConnectionData $connectionData)
 	{
 		$this->connectionData = $connectionData;
 	}
@@ -131,7 +131,7 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	*
 	* @return array @returnValue Return the result data set
 	*/
-	public function query($query)
+	public function query(string $query):array
 	{
 		$returnValue = array();
 		try
@@ -171,7 +171,7 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	* @return array $returnValue The first array item is the binding type string for all parameter the others are the parameter values.
 	* It is the input parameter to the mysqli bind_param function
 	*/
-	private function getStmtBindingParams($params) 
+	private function getStmtBindingParams(array $params):array 
 	{
 		$bindingType = "";
 		$returnValue = array();
@@ -194,7 +194,7 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	*
 	* @return array @returnValue Return the result data set
 	*/
-	public function execute($query, $params, &$item = null)
+	public function execute(string $query, ?array $params = null, ?array &$item = null):array
 	{
 		$returnValue = array();
 		try
@@ -258,7 +258,7 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 	*
 	* @return mixed @returnValue Return the scalar result 
 	*/
-	public function executeScalar($query, $params)
+	public function executeScalar(string $query, ?array $params = null)
 	{
 		$returnValue = null;
 		try
@@ -267,7 +267,7 @@ class DataAccessLayerHelper extends DataAccessLayerHelperBase
 			$bindingParams = array();
 			$stmt = $this->mysqli->stmt_init();
 			$stmt->prepare($query);
-			if ($params != null && count($params) > 0)
+			if ($params !== null && count($params) > 0)
 			{
 				$bindingParams = $this->getStmtBindingParams($params);
 				call_user_func_array(array($stmt,"bind_param"), $bindingParams);
